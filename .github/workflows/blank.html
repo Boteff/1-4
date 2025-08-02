@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Random Number</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 100px;
+      font-size: 48px;
+    }
+  </style>
+</head>
+<body>
+  <div id="random-number">Waiting...</div>
+
+  <script>
+    function generateRandomNumber() {
+      const number = Math.floor(Math.random() * 4) + 1; // 1 to 4
+      document.getElementById('random-number').textContent = number;
+    }
+
+    // Generate immediately
+    generateRandomNumber();
+
+    // Then every 60 seconds (60000 milliseconds)
+    setInterval(generateRandomNumber, 60000);
+  </script>
+</body>
+</html>
