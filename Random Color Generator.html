@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RGB Random Color Generator</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: monospace, cursive;
+      font-weight: 300;
+      font-style: normal;
+      transition: background 0.5s;
+    }
+    h1 {
+      font-size: 40px; /* 50% smaller than original 80px */
+      font-weight: bold;
+      color: white;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+      margin-top: 20px;
+    }
+    button {
+      font-family: monospace;
+      padding: 10px 20px;
+      font-size: 18px;
+      font-weight: 400;
+      cursor: pointer;
+      margin: 20px;
+    }
+    #rgbText {
+      font-size: 20px;
+      font-weight: bold;
+      color: white;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+    }
+    #hsbText {
+      font-size: 15px; /* 25% smaller than 20px RGB text */
+      font-weight: bold;
+      color: white;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+    }
+    #remainingColors {
+      font-size: 18px;
+      font-weight: bold;
+      color: white;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <h1 id="colorText">#FFFFFF</h1>
+  <p id="rgbText">RGB: 255, 255, 255</p>
+  <p id="hsbText">HSB: 0°, 0%, 100%</p>
+  <button onclick="generateColor()">Generate Random Color</button>
+  <button onclick="confirmReset()">Reset Colors</button>
+  <p id="remainingColors">Remaining Colors: 16777216</p>
+
+  <script>
+    let pickedColors = new Set(JSON.parse(localStorage.getItem('pickedColors')) || []);
+    const totalColors = 16777216;
+
+    function generateColor() {
+      if (pickedColors.size >= totalColors) {
+        alert("All possible colors have been used!");
+        return;
+      }
+
+      let r, g, b, hex;
+      do {
+        r = Math.floor(Math.random() * 256);
+        g = Math.floor(Math.random() * 256);
+        b = Math.floor(Math.random() * 256);
+        hex = rgbToHex(r, g, b);
+      } while (pickedColors.has(hex));
+
+      pickedColors.add(hex);
+      localStorage.setItem('pickedColors', JSON.stringify([...pickedColors]));
+
+      let hsb = rgbToHSB(r, g, b);
+
+      document.getElementById('colorText').innerText = hex;
+      document.getElementById('rgbText').innerText = `RGB: ${r}, ${g}, ${b}`;
+      document.getElementById('hsbText').innerText = `HSB: ${hsb.h}°, ${hsb.s}%, ${hsb.b}%`;
+      document.body.style.backgroundColor = hex;
+
+      navigator.clipboard.writeText(hex.slice(1));
+      updateRemaining();
+    }
+
+    function confirmReset() {
+      if (confirm("Are you sure you want to reset all picked colors? This cannot be undone.")) {
+        resetColors();
+      }
+    }
+
+    function resetColors() {
+      localStorage.removeItem('pickedColors');
+      pickedColors.clear();
+      updateRemaining();
+      document.body.style.backgroundColor = "#FFFFFF";
+      document.getElementById('colorText').innerText = "#FFFFFF";
+      document.getElementById('rgbText').innerText = "RGB: 255, 255, 255";
+      document.getElementById('hsbText').innerText = "HSB: 0°, 0%, 100%";
+    }
+
+    function updateRemaining() {
+      let remaining = totalColors - pickedColors.size;
+      document.getElementById('remainingColors').innerText = `Remaining Colors: ${remaining}`;
+    }
+
+    function rgbToHex(r, g, b) {
+      return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase();
+    }
+
+    function rgbToHSB(r, g, b) {
+      let rPercent = r / 255, gPercent = g / 255, bPercent = b / 255;
+      let max = Math.max(rPercent, gPercent, bPercent);
+      let min = Math.min(rPercent, gPercent, bPercent);
+      let delta = max - min;
+
+      let h = 0;
+      if (delta !== 0) {
+        if (max === rPercent) {
+          h = ((gPercent - bPercent) / delta) % 6;
+        } else if (max === gPercent) {
+          h = (bPercent - rPercent) / delta + 2;
+        } else {
+          h = (rPercent - gPercent) / delta + 4;
+        }
+        h = Math.round(h * 60);
+        if (h < 0) h += 360;
+      }
+
+      let s = max === 0 ? 0 : (delta / max) * 100;
+      let bValue = max * 100;
+
+      return { h: Math.round(h), s: Math.round(s), b: Math.round(bValue) };
+    }
+
+    updateRemaining();
+  </script>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>A. R. C.</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      margin: 10px;
+    }
+    input {
+      width: 60px;
+      padding: 5px;
+      font-size: 16px;
+      text-align: center;
+    }
+    button {
+      padding: 5px 8px;
+      font-size: 14px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    .calculator-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin: 20px 0 5px;
+    }
+    #aspectButtons {
+      display: flex;
+      justify-content: center;
+      gap: 45px;
+      margin-top: 10px;
+    }
+    .ratioButton {
+      font-size: 16px;
+      font-weight: bold;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 4px;
+      color: white;
+    }
+    #ratioButtonR {
+      background-color: #ff4d4d;
+    }
+    #ratioButtonNR {
+      background-color: #E04CD0;
+    }
+    .calc-block {
+      margin-bottom: 20px;
+    }
+    .row {
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Calculator R -->
+  <div class="calculator" id="calcR">
+    <div class="calculator-title">R</div>
+
+    <div class="row">
+      <strong>Width:</strong> 
+      <button onclick="adjustWidth('R', -8)">-</button>
+      <input type="number" id="widthR" value="256" oninput="updateRatio('R')" min="16" max="9999">
+      <button onclick="adjustWidth('R', 32)">+</button>
+    </div>
+
+    <div class="row">
+      <input type="number" id="customWidth" placeholder="Width" oninput="updateAutoHeightFromCustomWidth()">
+    </div>
+
+    <div class="row">
+      <strong>Height:</strong> 
+      <button onclick="adjustHeight('R', -4)">-</button>
+      <input type="number" id="heightR" value="256" oninput="updateRatio('R')" min="16" max="9999">
+      <button onclick="adjustHeight('R', 8)">+</button>
+      <span id="autoHeightResult"></span>
+    </div>
+
+    <div id="aspectButtons">
+      <button onclick="setAspectRatio('R', 4, 5)">4:5</button>
+      <button class="ratioButton" id="ratioButtonR" onclick="resetHeight('R')">1:1</button>
+      <button onclick="setAspectRatio('R', 2, 3)">2:3</button>
+    </div>
+  </div>
+
+  <!-- Calculator NR -->
+  <div class="calculator" id="calcNR">
+    <div class="calculator-title">NR</div>
+
+    <p><strong>Width:</strong> 
+      <button onclick="adjustWidth('NR', -8)">-</button>
+      <input type="number" id="widthNR" value="256" oninput="syncNRHeight()" min="16" max="9999">
+      <button onclick="adjustWidth('NR', 8)">+</button>
+    </p>
+
+    <p><strong>Height:</strong> 
+      <button onclick="noop()"></button>
+      <input type="number" id="heightNR" value="256" disabled>
+      <button onclick="noop()"></button>
+    </p>
+
+    <div id="aspectButtons">
+      <div style="width: 65px;"></div>
+      <button class="ratioButton" id="ratioButtonNR" onclick="copyAspectFromR()">1:1</button>
+      <div style="width: 65px;"></div>
+    </div>
+  </div>
+
+  <script>
+    let nrAspect = { w: 1, h: 1 }; // Default
+
+    function gcd(a, b) {
+      return b === 0 ? a : gcd(b, a % b);
+    }
+
+    function adjustWidth(calc, amount) {
+      let widthInput = document.getElementById('width' + calc);
+      let newWidth = parseInt(widthInput.value, 10) + amount;
+      if (newWidth >= 16 && newWidth <= 9999) {
+        widthInput.value = newWidth;
+        if (calc === 'NR') syncNRHeight();
+        updateRatio(calc);
+        saveState();
+      }
+    }
+
+    function adjustHeight(calc, amount) {
+      let heightInput = document.getElementById('height' + calc);
+      let widthInput = document.getElementById('width' + calc);
+      let newHeight = parseInt(heightInput.value, 10) + amount;
+      if (newHeight >= 16 && newHeight <= parseInt(widthInput.value) * 2) {
+        heightInput.value = newHeight;
+        updateRatio(calc);
+        saveState();
+      }
+    }
+
+    function resetHeight(calc) {
+      let width = parseInt(document.getElementById('width' + calc).value, 10);
+      document.getElementById('height' + calc).value = width;
+      updateRatio(calc);
+      saveState();
+    }
+
+    function setAspectRatio(calc, wPart, hPart) {
+      let width = parseInt(document.getElementById('width' + calc).value, 10);
+      let newHeight = Math.round((width * hPart) / wPart);
+      document.getElementById('height' + calc).value = newHeight;
+      updateRatio(calc);
+      saveState();
+    }
+
+    function updateRatio(calc) {
+      let width = parseInt(document.getElementById('width' + calc).value, 10);
+      let height = parseInt(document.getElementById('height' + calc).value, 10);
+      if (!isNaN(width) && !isNaN(height) && width > 0 && height > 0) {
+        let divisor = gcd(width, height);
+        let ratioText = (width / divisor) + ":" + (height / divisor);
+        document.getElementById('ratioButton' + calc).innerText = ratioText;
+        if (calc === 'R') {
+          updateAutoHeightFromCustomWidth();
+        }
+      }
+    }
+
+    function copyAspectFromR() {
+      let widthR = parseInt(document.getElementById('widthR').value);
+      let heightR = parseInt(document.getElementById('heightR').value);
+      let divisor = gcd(widthR, heightR);
+      nrAspect = {
+        w: widthR / divisor,
+        h: heightR / divisor
+      };
+      syncNRHeight();
+      updateNRRatioDisplay();
+      saveState();
+    }
+
+    function syncNRHeight() {
+      let widthNR = parseInt(document.getElementById('widthNR').value);
+      let newHeight = Math.round((widthNR * nrAspect.h) / nrAspect.w);
+      document.getElementById('heightNR').value = newHeight;
+      updateNRRatioDisplay();
+    }
+
+    function updateNRRatioDisplay() {
+      document.getElementById('ratioButtonNR').innerText = nrAspect.w + ":" + nrAspect.h;
+    }
+
+    function noop() {
+      // Do nothing
+    }
+
+    function updateAutoHeightFromCustomWidth() {
+      const customWidth = parseInt(document.getElementById('customWidth').value);
+      const ratioText = document.getElementById('ratioButtonR').innerText;
+      const [rw, rh] = ratioText.split(":").map(Number);
+      if (!isNaN(customWidth) && rw && rh) {
+        const autoHeight = Math.round((customWidth * rh) / rw);
+        document.getElementById('autoHeightResult').innerText = `= ${autoHeight}`;
+      } else {
+        document.getElementById('autoHeightResult').innerText = '';
+      }
+      saveState();
+    }
+
+    function saveState() {
+      const state = {
+        widthR: document.getElementById('widthR').value,
+        heightR: document.getElementById('heightR').value,
+        widthNR: document.getElementById('widthNR').value,
+        heightNR: document.getElementById('heightNR').value,
+        customWidth: document.getElementById('customWidth').value,
+        nrAspect: nrAspect
+      };
+      localStorage.setItem('arc_state', JSON.stringify(state));
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem('arc_state');
+      if (saved) {
+        try {
+          const state = JSON.parse(saved);
+          document.getElementById('widthR').value = state.widthR;
+          document.getElementById('heightR').value = state.heightR;
+          document.getElementById('widthNR').value = state.widthNR;
+          document.getElementById('heightNR').value = state.heightNR;
+          document.getElementById('customWidth').value = state.customWidth || '';
+          nrAspect = state.nrAspect || { w: 1, h: 1 };
+          updateRatio('R');
+          syncNRHeight();
+          updateAutoHeightFromCustomWidth();
+        } catch (e) {
+          console.error("Failed to load state:", e);
+        }
+      }
+    }
+
+    loadState();
+    updateRatio('R');
+    updateNRRatioDisplay();
+  </script>
+</body>
+</html>
