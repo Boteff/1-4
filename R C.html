@@ -6,210 +6,227 @@
   <title>RGB Random Color Generator</title>
   <style>
     body {
-      text-align: center;
-      font-family: monospace, cursive;
-      font-weight: 300;
-      font-style: normal;
-      transition: background 0.5s;
-    }
-    h1 {
-      font-size: 40px;
-      font-weight: bold;
+      background-color: black;
       color: white;
-      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
-      margin-top: 20px;
+      text-align: center;
+      font-family: 'Courier New', monospace;
+      margin: 0;
+      padding: 20px;
     }
+
+    h1 {
+      font-size: 28px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+
+    .controls {
+      margin: 20px 0;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .toggle-btn {
+      padding: 8px 12px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #333;
+      color: white;
+      border: 1px solid #555;
+      border-radius: 4px;
+    }
+
+    .toggle-btn.active {
+      background-color: #007acc;
+      font-weight: bold;
+    }
+
+    .input-group {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    input[type="number"] {
+      width: 60px;
+      padding: 8px;
+      font-size: 16px;
+      background-color: #333;
+      color: white;
+      border: 1px solid #555;
+      border-radius: 4px;
+    }
+
     button {
-      font-family: monospace;
       padding: 10px 20px;
       font-size: 18px;
-      font-weight: 400;
       cursor: pointer;
-      margin: 10px;
+      background-color: #007acc;
+      color: white;
+      border: none;
+      border-radius: 4px;
     }
-    #rgbText {
+
+    button:hover {
+      background-color: #005a99;
+    }
+
+    #colorList {
+      list-style: none;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .color-item {
+      display: flex;
+      align-items: center;
+      gap: 15px;
       font-size: 18px;
-      font-weight: bold;
-      color: white;
-      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
-      display: none;
+      padding: 10px;
+      background-color: #111;
+      border-radius: 6px;
+      justify-content: space-between;
     }
-    #hsbText {
-      font-size: 22px; /* larger than RGB now */
-      font-weight: bold;
-      color: white;
-      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
-      display: none;
+
+    .color-swatch {
+      width: 40px;
+      height: 40px;
+      border: 1px solid #444;
+      border-radius: 4px;
     }
+
     #remainingColors {
+      margin-top: 30px;
       font-size: 18px;
       font-weight: bold;
-      color: white;
-      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
-    }
-    .controls {
-      margin: 10px;
-      color: white;
     }
   </style>
 </head>
 <body>
-  <h1 id="colorText">#FFFFFF</h1>
-  <p id="rgbText">RGB: 255, 255, 255</p>
-  <p id="hsbText">HSB: 0°, 0%, 100%</p>
+  <h1>Random Color Generator</h1>
 
+  <!-- Toggle Buttons -->
   <div class="controls">
-    <label><input type="checkbox" id="showRGB" checked> Show RGB</label>
-    <label><input type="checkbox" id="showHSB" checked> Show HSB</label><br/>
-    <label>How many colors to generate: <input type="number" id="colorCount" min="1" value="1" style="width: 60px;"></label>
+    <button id="hexBtn" class="toggle-btn active">HEX</button>
+    <button id="rgbBtn" class="toggle-btn">RGB</button>
+    <button id="hsbBtn" class="toggle-btn">HSB</button>
   </div>
 
-  <button onclick="generateColor()">Generate Random Color(s)</button>
-  <button onclick="confirmReset()">Reset Colors</button>
+  <!-- Number Input -->
+  <div class="input-group">
+    <label for="countInput">Generate:</label>
+    <input type="number" id="countInput" min="1" max="100" value="1">
+    <label>colors</label>
+  </div>
+
+  <!-- Generate Button -->
+  <button onclick="generateColors()">Generate Random Colors</button>
+  <button onclick="confirmReset()">Reset All Colors</button>
+
+  <!-- Color List -->
+  <ul id="colorList"></ul>
+
+  <!-- Remaining Count -->
   <p id="remainingColors">Remaining Colors: 16777216</p>
 
   <script>
+    // Persistent storage
     let pickedColors = new Set(JSON.parse(localStorage.getItem('pickedColors')) || []);
     const totalColors = 16777216;
 
-    function generateColor() {
-      const count = parseInt(document.getElementById('colorCount').value) || 1;
-      let lastHex = "#FFFFFF", lastRGB = "RGB: 255, 255, 255", lastHSB = "HSB: 0°, 0%, 100%";
-      let generated = 0;
+    // Display mode
+    let displayMode = 'HEX'; // default
 
-      while (generated < count && pickedColors.size < totalColors) {
-        let r = Math.floor(Math.random() * 256);
-        let g = Math.floor(Math.random() * 256);
-        let b = Math.floor(Math.random() * 256);
-        let hex = rgbToHex(r, g, b);
+    // DOM Elements
+    const hexBtn = document.getElementById('hexBtn');
+    const rgbBtn = document.getElementById('rgbBtn');
+    const hsbBtn = document.getElementById('hsbBtn');
+    const countInput = document.getElementById('countInput');
+    const colorList = document.getElementById('colorList');
+    const remainingEl = document.getElementById('remainingColors');
 
-        if (pickedColors.has(hex)) continue;
+    // Toggle buttons
+    [hexBtn, rgbBtn, hsbBtn].forEach(btn => {
+      btn.addEventListener('click', function () {
+        [hexBtn, rgbBtn, hsbBtn].forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        displayMode = this.id === 'hexBtn' ? 'HEX' :
+                      this.id === 'rgbBtn' ? 'RGB' : 'HSB';
+      });
+    });
 
-        pickedColors.add(hex);
-        generated++;
-        lastHex = hex;
-        lastRGB = `RGB: ${r}, ${g}, ${b}`;
-        const hsb = rgbToHSB(r, g, b);
-        lastHSB = `HSB: ${hsb.h}°, ${hsb.s}%, ${hsb.b}%`;
+    function generateColors() {
+      const count = parseInt(countInput.value) || 1;
+      if (count < 1 || count > 100) {
+        alert("Please enter a number between 1 and 100.");
+        return;
       }
 
-      localStorage.setItem('pickedColors', JSON.stringify([...pickedColors]));
-      document.getElementById('colorText').innerText = lastHex;
-      document.body.style.backgroundColor = lastHex;
-      document.getElementById('rgbText').innerText = lastRGB;
-      document.getElementById('hsbText').innerText = lastHSB;
-
-      updateRemaining();
-      updateVisibility();
-    }
-
-    function confirmReset() {
-      if (confirm("Are you sure you want to reset all picked colors? This cannot be undone.")) {
-        resetColors();
-      }
-    }
-
-    function resetColors() {
-      localStorage.removeItem('pickedColors');
-      pickedColors.clear();
-      updateRemaining();
-      document.body.style.backgroundColor = "#FFFFFF";
-      document.getElementById('colorText').innerText = "#FFFFFF";
-      document.getElementById('rgbText').innerText = "RGB: 255, 255, 255";
-      document.getElementById('hsbText').innerText = "HSB: 0°, 0%, 100%";
-    }
-
-    function updateRemaining() {
-      const remaining = totalColors - pickedColors.size;
-      document.getElementById('remainingColors').innerText = `Remaining Colors: ${remaining}`;
-    }
-
-    function updateVisibility() {
-      document.getElementById('rgbText').style.display = document.getElementById('showRGB').checked ? 'block' : 'none';
-      document.getElementById('hsbText').style.display = document.getElementById('showHSB').checked ? 'block' : 'none';
-    }
-
-    function rgbToHex(r, g, b) {
-      return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase();
-    }
-
-    function rgbToHSB(r, g, b) {
-      const rP = r / 255, gP = g / 255, bP = b / 255;
-      const max = Math.max(rP, gP, bP), min = Math.min(rP, gP, bP);
-      const delta = max - min;
-      let h = 0;
-
-      if (delta !== 0) {
-        if (max === rP) h = ((gP - bP) / delta) % 6;
-        else if (max === gP) h = (bP - rP) / delta + 2;
-        else h = (rP - gP) / delta + 4;
-        h = Math.round(h * 60);
-        if (h < 0) h += 360;
-      }
-
-      const s = max === 0 ? 0 : (delta / max) * 100;
-      const bVal = max * 100;
-      return { h: Math.round(h), s: Math.round(s), b: Math.round(bVal) };
-    }
-
-    document.getElementById('showRGB').addEventListener('change', updateVisibility);
-    document.getElementById('showHSB').addEventListener('change', updateVisibility);
-
-    updateRemaining();
-    updateVisibility();
-  </script>
-</body>
-</html>      font-size: 15px; /* 25% smaller than 20px RGB text */
-      font-weight: bold;
-      color: white;
-      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
-    }
-    #remainingColors {
-      font-size: 18px;
-      font-weight: bold;
-      color: white;
-      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
-    }
-  </style>
-</head>
-<body>
-  <h1 id="colorText">#FFFFFF</h1>
-  <p id="rgbText">RGB: 255, 255, 255</p>
-  <p id="hsbText">HSB: 0°, 0%, 100%</p>
-  <button onclick="generateColor()">Generate Random Color</button>
-  <button onclick="confirmReset()">Reset Colors</button>
-  <p id="remainingColors">Remaining Colors: 16777216</p>
-
-  <script>
-    let pickedColors = new Set(JSON.parse(localStorage.getItem('pickedColors')) || []);
-    const totalColors = 16777216;
-
-    function generateColor() {
       if (pickedColors.size >= totalColors) {
         alert("All possible colors have been used!");
         return;
       }
 
-      let r, g, b, hex;
-      do {
-        r = Math.floor(Math.random() * 256);
-        g = Math.floor(Math.random() * 256);
-        b = Math.floor(Math.random() * 256);
-        hex = rgbToHex(r, g, b);
-      } while (pickedColors.has(hex));
+      const newColors = [];
+      let attempts = 0;
+      const maxAttempts = count * 1000; // Avoid infinite loop
 
-      pickedColors.add(hex);
+      while (newColors.length < count && attempts < maxAttempts) {
+        attempts++;
+        const r = Math.floor(Math.random() * 256);
+        const g = Math.floor(Math.random() * 256);
+        const b = Math.floor(Math.random() * 256);
+        const hex = rgbToHex(r, g, b);
+
+        if (pickedColors.has(hex)) continue;
+
+        const hsb = rgbToHSB(r, g, b);
+        newColors.push({ r, g, b, hex, hsb });
+        pickedColors.add(hex);
+      }
+
+      if (newColors.length === 0) {
+        alert("Could not generate any new unique colors (too many attempts).");
+        return;
+      }
+
+      // Save to localStorage
       localStorage.setItem('pickedColors', JSON.stringify([...pickedColors]));
 
-      let hsb = rgbToHSB(r, g, b);
-
-      document.getElementById('colorText').innerText = hex;
-      document.getElementById('rgbText').innerText = `RGB: ${r}, ${g}, ${b}`;
-      document.getElementById('hsbText').innerText = `HSB: ${hsb.h}°, ${hsb.s}%, ${hsb.b}%`;
-      document.body.style.backgroundColor = hex;
-
-      navigator.clipboard.writeText(hex.slice(1));
+      // Update UI
+      updateColorList(newColors);
       updateRemaining();
+    }
+
+    function updateColorList(colors) {
+      colorList.innerHTML = ''; // Clear previous
+      colors.forEach(color => {
+        const li = document.createElement('li');
+        li.className = 'color-item';
+
+        let text;
+        if (displayMode === 'HEX') {
+          text = color.hex;
+        } else if (displayMode === 'RGB') {
+          text = `RGB(${color.r}, ${color.g}, ${color.b})`;
+        } else {
+          text = `HSB(${color.hsb.h}°, ${color.hsb.s}%, ${color.hsb.b}%)`;
+        }
+
+        li.innerHTML = `
+          <div class="color-swatch" style="background-color: ${color.hex};"></div>
+          <span>${text}</span>
+        `;
+        colorList.appendChild(li);
+      });
     }
 
     function confirmReset() {
@@ -221,16 +238,13 @@
     function resetColors() {
       localStorage.removeItem('pickedColors');
       pickedColors.clear();
+      colorList.innerHTML = '';
       updateRemaining();
-      document.body.style.backgroundColor = "#FFFFFF";
-      document.getElementById('colorText').innerText = "#FFFFFF";
-      document.getElementById('rgbText').innerText = "RGB: 255, 255, 255";
-      document.getElementById('hsbText').innerText = "HSB: 0°, 0%, 100%";
     }
 
     function updateRemaining() {
-      let remaining = totalColors - pickedColors.size;
-      document.getElementById('remainingColors').innerText = `Remaining Colors: ${remaining}`;
+      const remaining = totalColors - pickedColors.size;
+      remainingEl.innerText = `Remaining Colors: ${remaining}`;
     }
 
     function rgbToHex(r, g, b) {
@@ -259,9 +273,14 @@
       let s = max === 0 ? 0 : (delta / max) * 100;
       let bValue = max * 100;
 
-      return { h: Math.round(h), s: Math.round(s), b: Math.round(bValue) };
+      return {
+        h: Math.round(h),
+        s: Math.round(s),
+        b: Math.round(bValue)
+      };
     }
 
+    // Initialize
     updateRemaining();
   </script>
 </body>
