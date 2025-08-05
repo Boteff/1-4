@@ -13,13 +13,11 @@
       margin: 0;
       padding: 20px;
     }
-
     h1 {
       font-size: 28px;
       font-weight: bold;
       margin: 20px 0;
     }
-
     .controls {
       margin: 20px 0;
       display: flex;
@@ -27,7 +25,6 @@
       gap: 15px;
       flex-wrap: wrap;
     }
-
     .toggle-btn {
       padding: 8px 12px;
       font-size: 16px;
@@ -37,12 +34,10 @@
       border: 1px solid #555;
       border-radius: 4px;
     }
-
     .toggle-btn.active {
       background-color: #007acc;
       font-weight: bold;
     }
-
     .input-group {
       display: flex;
       justify-content: center;
@@ -50,7 +45,6 @@
       gap: 10px;
       margin: 15px 0;
     }
-
     input[type="number"] {
       width: 60px;
       padding: 8px;
@@ -60,7 +54,6 @@
       border: 1px solid #555;
       border-radius: 4px;
     }
-
     button {
       padding: 10px 20px;
       font-size: 18px;
@@ -70,11 +63,9 @@
       border: none;
       border-radius: 4px;
     }
-
     button:hover {
       background-color: #005a99;
     }
-
     #colorList {
       list-style: none;
       padding: 0;
@@ -84,7 +75,6 @@
       max-width: 600px;
       margin: 20px auto;
     }
-
     .color-item {
       display: flex;
       align-items: center;
@@ -94,21 +84,18 @@
       background-color: #111;
       border-radius: 6px;
     }
-
     .color-swatch {
       width: 40px;
       height: 40px;
       border: 1px solid #444;
       border-radius: 4px;
     }
-
     .color-value {
       font-family: monospace;
       font-weight: bold;
       color: white;
       white-space: nowrap;
     }
-
     .distance-control {
       margin: 15px auto;
       max-width: 500px;
@@ -117,18 +104,10 @@
       background-color: #1a1a1a;
       border-radius: 6px;
     }
-
     .distance-control label {
       font-size: 16px;
       margin-right: 10px;
     }
-
-    .distance-control input[type="range"] {
-      width: 60%;
-      margin: 0 10px;
-      accent-color: #007acc;
-    }
-
     #remainingColors {
       margin-top: 30px;
       font-size: 18px;
@@ -139,101 +118,72 @@
 <body>
   <h1>Random Color Generator</h1>
 
-  <!-- Toggle Buttons -->
   <div class="controls">
     <button id="hexBtn" class="toggle-btn">HEX</button>
     <button id="rgbBtn" class="toggle-btn">RGB</button>
     <button id="hsbBtn" class="toggle-btn active">HSB</button>
   </div>
 
-  <!-- Number Input -->
   <div class="input-group">
     <label for="countInput">Generate:</label>
     <input type="number" id="countInput" min="1" max="100" value="1">
     <label>colors</label>
   </div>
 
-  <!-- Minimum Distance Control -->
   <div class="distance-control">
-    <label for="distanceSlider">Min Color Distance:</label>
-    <input type="range" id="distanceSlider" min="0" max="100" value="40">
-    <input type="number" id="distanceInput" min="0" max="100" value="40" style="width: 50px;">
-    <div><small>Higher = more visually distinct</small></div>
+    <label for="distanceInput">Min Color Distance:</label>
+    <input type="number" id="distanceInput" min="0" max="100" value="40" style="width: 60px;">
+    <div><small>0 = any color, 100 = very different (default: 40)</small></div>
   </div>
 
-  <!-- Generate & Reset Buttons -->
   <button onclick="generateColors()">Generate Random Colors</button>
   <button onclick="confirmReset()">Reset All Colors</button>
 
-  <!-- Color List -->
   <ul id="colorList"></ul>
-
-  <!-- Remaining Count -->
   <p id="remainingColors">Remaining Colors: 16777216</p>
 
   <script>
-    // Persistent storage
     const totalColors = 16777216;
     let pickedColors = JSON.parse(localStorage.getItem('pickedColors')) || [];
-    
-    // Minimum distance control
-    const distanceSlider = document.getElementById('distanceSlider');
-    const distanceInput = document.getElementById('distanceInput');
-    
-    // Load saved distance or default to 40
     let minDistance = parseInt(localStorage.getItem('minDistance')) || 40;
-    distanceSlider.value = minDistance;
-    distanceInput.value = minDistance;
+    let displayMode = 'HSB';
 
-    let displayMode = 'HSB'; // Default
-
-    // DOM Elements
     const hexBtn = document.getElementById('hexBtn');
     const rgbBtn = document.getElementById('rgbBtn');
     const hsbBtn = document.getElementById('hsbBtn');
     const countInput = document.getElementById('countInput');
+    const distanceInput = document.getElementById('distanceInput');
     const colorList = document.getElementById('colorList');
     const remainingEl = document.getElementById('remainingColors');
 
-    // Sync slider and input
-    function updateDistance(value) {
-      const v = parseInt(value);
-      distanceSlider.value = v;
-      distanceInput.value = v;
-      minDistance = v;
-      localStorage.setItem('minDistance', v);
-    }
+    distanceInput.value = minDistance;
+    distanceInput.addEventListener('change', function () {
+      let value = parseInt(this.value);
+      if (isNaN(value) || value < 0) value = 0;
+      if (value > 100) value = 100;
+      this.value = value;
+      minDistance = value;
+      localStorage.setItem('minDistance', value);
+    });
 
-    distanceSlider.addEventListener('input', () => updateDistance(distanceSlider.value));
-    distanceInput.addEventListener('change', () => updateDistance(distanceInput.value));
-
-    // Toggle buttons
     [hexBtn, rgbBtn, hsbBtn].forEach(btn => {
       btn.addEventListener('click', function () {
         [hexBtn, rgbBtn, hsbBtn].forEach(b => b.classList.remove('active'));
         this.classList.add('active');
-        displayMode = this.id === 'hexBtn' ? 'HEX' :
-                      this.id === 'rgbBtn' ? 'RGB' : 'HSB';
+        displayMode = this.id === 'hexBtn' ? 'HEX' : this.id === 'rgbBtn' ? 'RGB' : 'HSB';
       });
     });
 
     function generateColors() {
       const count = parseInt(countInput.value) || 1;
-      if (count < 1 || count > 100) {
-        alert("Please enter a number between 1 and 100.");
-        return;
-      }
+      if (count < 1 || count > 100) return alert("1–100 only.");
 
-      if (pickedColors.length >= totalColors) {
-        alert("All possible colors have been used!");
-        return;
-      }
+      if (pickedColors.length >= totalColors) return alert("All colors used!");
 
       const newColors = [];
       const maxAttempts = count * 5000;
       let attempts = 0;
 
-      // Phase 1: Try to find visually distinct colors
       while (newColors.length < count && attempts < maxAttempts) {
         attempts++;
         const r = Math.floor(Math.random() * 256);
@@ -242,50 +192,32 @@
         const hex = rgbToHex(r, g, b);
         const hsb = rgbToHSB(r, g, b);
 
-        const isUsed = pickedColors.some(c => c.hex === hex);
-        if (isUsed) continue;
-
-        const tooSimilar = pickedColors.some(used => {
-          return hsbDistance(hsb, used.hsb) < minDistance;
-        });
-
-        if (tooSimilar) continue;
+        if (pickedColors.some(c => c.hex === hex)) continue;
+        if (pickedColors.some(used => hsbDistance(hsb, used.hsb) < minDistance)) continue;
 
         newColors.push({ r, g, b, hex, hsb });
       }
 
-      // Phase 2: Fallback — pick any unique color if needed
       if (newColors.length < count) {
-        let fallbackCount = count - newColors.length;
-        attempts = 0;
-        const maxFallback = fallbackCount * 1000;
-
-        while (fallbackCount > 0 && attempts < maxFallback) {
-          attempts++;
+        let fallback = count - newColors.length;
+        let fAttempts = 0;
+        while (fallback > 0 && fAttempts < fallback * 1000) {
+          fAttempts++;
           const r = Math.floor(Math.random() * 256);
           const g = Math.floor(Math.random() * 256);
           const b = Math.floor(Math.random() * 256);
           const hex = rgbToHex(r, g, b);
-
-          const isUsed = pickedColors.some(c => c.hex === hex);
-          if (isUsed) continue;
-
+          if (pickedColors.some(c => c.hex === hex)) continue;
           const hsb = rgbToHSB(r, g, b);
           newColors.push({ r, g, b, hex, hsb });
-          fallbackCount--;
+          fallback--;
         }
       }
 
-      if (newColors.length === 0) {
-        alert("Could not generate any new colors.");
-        return;
-      }
+      if (newColors.length === 0) return alert("No colors available.");
 
-      // Save
       pickedColors.push(...newColors);
       localStorage.setItem('pickedColors', JSON.stringify(pickedColors));
-
-      // Update UI
       updateColorList(newColors);
       updateRemaining();
     }
@@ -295,44 +227,30 @@
       colors.forEach(color => {
         const li = document.createElement('li');
         li.className = 'color-item';
-
-        let text;
-        if (displayMode === 'HEX') {
-          text = color.hex;
-        } else if (displayMode === 'RGB') {
-          text = `RGB(${color.r}, ${color.g}, ${color.b})`;
-        } else {
-          text = `HSB(${color.hsb.h}°, ${color.hsb.s}%, ${color.hsb.b}%)`;
-        }
-
-        li.innerHTML = `
-          <div class="color-swatch" style="background-color: ${color.hex};"></div>
-          <span class="color-value">${text}</span>
-        `;
+        const text = displayMode === 'HEX' ? color.hex :
+                     displayMode === 'RGB' ? `RGB(${color.r}, ${color.g}, ${color.b})` :
+                     `HSB(${color.hsb.h}°, ${color.hsb.s}%, ${color.hsb.b}%)`;
+        li.innerHTML = `<div class="color-swatch" style="background-color: ${color.hex};"></div><span class="color-value">${text}</span>`;
         colorList.appendChild(li);
       });
     }
 
     function confirmReset() {
-      if (confirm("Are you sure you want to reset all picked colors? This cannot be undone.")) {
-        resetColors();
-      }
+      if (confirm("Reset all colors? This cannot be undone.")) resetColors();
     }
 
     function resetColors() {
       localStorage.removeItem('pickedColors');
-      localStorage.removeItem('minDistance'); // Optional: reset distance too
+      localStorage.removeItem('minDistance');
       pickedColors = [];
       minDistance = 40;
-      distanceSlider.value = 40;
       distanceInput.value = 40;
       colorList.innerHTML = '';
       updateRemaining();
     }
 
     function updateRemaining() {
-      const remaining = totalColors - pickedColors.length;
-      remainingEl.innerText = `Remaining Colors: ${remaining}`;
+      remainingEl.innerText = `Remaining Colors: ${totalColors - pickedColors.length}`;
     }
 
     function rgbToHex(r, g, b) {
@@ -340,45 +258,29 @@
     }
 
     function rgbToHSB(r, g, b) {
-      let rPercent = r / 255, gPercent = g / 255, bPercent = b / 255;
-      let max = Math.max(rPercent, gPercent, bPercent);
-      let min = Math.min(rPercent, gPercent, bPercent);
-      let delta = max - min;
-
+      const [rp, gp, bp] = [r/255, g/255, b/255];
+      const max = Math.max(rp, gp, bp), min = Math.min(rp, gp, bp);
+      const delta = max - min;
       let h = 0;
-      if (delta !== 0) {
-        if (max === rPercent) {
-          h = ((gPercent - bPercent) / delta) % 6;
-        } else if (max === gPercent) {
-          h = (bPercent - rPercent) / delta + 2;
-        } else {
-          h = (rPercent - gPercent) / delta + 4;
-        }
+      if (delta) {
+        if (max === rp) h = ((gp - bp) / delta) % 6;
+        else if (max === gp) h = (bp - rp) / delta + 2;
+        else h = (rp - gp) / delta + 4;
         h = Math.round(h * 60);
         if (h < 0) h += 360;
       }
-
-      let s = max === 0 ? 0 : (delta / max) * 100;
-      let bValue = max * 100;
-
-      return {
-        h: Math.round(h),
-        s: Math.round(s),
-        b: Math.round(bValue)
-      };
+      const s = max ? (delta / max) * 100 : 0;
+      const bVal = max * 100;
+      return { h: Math.round(h), s: Math.round(s), b: Math.round(bVal) };
     }
 
     function hsbDistance(hsb1, hsb2) {
-      const dh = Math.min(
-        Math.abs(hsb1.h - hsb2.h),
-        360 - Math.abs(hsb1.h - hsb2.h)
-      );
+      const dh = Math.min(Math.abs(hsb1.h - hsb2.h), 360 - Math.abs(hsb1.h - hsb2.h));
       const ds = Math.abs(hsb1.s - hsb2.s);
       const db = Math.abs(hsb1.b - hsb2.b);
       return Math.sqrt(dh * dh + ds * ds + db * db);
     }
 
-    // Initialize
     updateRemaining();
   </script>
 </body>
