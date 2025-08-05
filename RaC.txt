@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RGB Random Color Generator</title>
+  <style>
+    body {
+      background-color: black;
+      color: white;
+      text-align: center;
+      font-family: 'Courier New', monospace;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+
+    .controls {
+      margin: 20px 0;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .toggle-btn {
+      padding: 8px 12px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #333;
+      color: white;
+      border: 1px solid #555;
+      border-radius: 4px;
+    }
+
+    .toggle-btn.active {
+      background-color: #007acc;
+      font-weight: bold;
+    }
+
+    .input-group {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin: 15px 0;
+    }
+
+    input[type="number"] {
+      width: 60px;
+      padding: 8px;
+      font-size: 16px;
+      background-color: #333;
+      color: white;
+      border: 1px solid #555;
+      border-radius: 4px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      background-color: #007acc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background-color: #005a99;
+    }
+
+    #colorList {
+      list-style: none;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 600px;
+      margin: 20px auto;
+    }
+
+    .color-item {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      font-size: 18px;
+      padding: 10px;
+      background-color: #111;
+      border-radius: 6px;
+    }
+
+    .color-swatch {
+      width: 40px;
+      height: 40px;
+      border: 1px solid #444;
+      border-radius: 4px;
+    }
+
+    .color-value {
+      font-family: monospace;
+      font-weight: bold;
+      color: white;
+      white-space: nowrap;
+    }
+
+    #remainingColors {
+      margin-top: 30px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Random Color Generator</h1>
+
+  <!-- Toggle Buttons -->
+  <div class="controls">
+    <button id="hexBtn" class="toggle-btn active">HEX</button>
+    <button id="rgbBtn" class="toggle-btn">RGB</button>
+    <button id="hsbBtn" class="toggle-btn">HSB</button>
+  </div>
+
+  <!-- Number Input -->
+  <div class="input-group">
+    <label for="countInput">Generate:</label>
+    <input type="number" id="countInput" min="1" max="100" value="1">
+    <label>colors</label>
+  </div>
+
+  <!-- Generate & Reset Buttons -->
+  <button onclick="generateColors()">Generate Random Colors</button>
+  <button onclick="confirmReset()">Reset All Colors</button>
+
+  <!-- Color List -->
+  <ul id="colorList"></ul>
+
+  <!-- Remaining Count -->
+  <p id="remainingColors">Remaining Colors: 16777216</p>
+
+  <script>
+    // Persistent storage
+    let pickedColors = new Set(JSON.parse(localStorage.getItem('pickedColors')) || []);
+    const totalColors = 16777216;
+
+    // Display mode
+    let displayMode = 'HEX'; // default
+
+    // DOM Elements
+    const hexBtn = document.getElementById('hexBtn');
+    const rgbBtn = document.getElementById('rgbBtn');
+    const hsbBtn = document.getElementById('hsbBtn');
+    const countInput = document.getElementById('countInput');
+    const colorList = document.getElementById('colorList');
+    const remainingEl = document.getElementById('remainingColors');
+
+    // Toggle buttons
+    [hexBtn, rgbBtn, hsbBtn].forEach(btn => {
+      btn.addEventListener('click', function () {
+        [hexBtn, rgbBtn, hsbBtn].forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        displayMode = this.id === 'hexBtn' ? 'HEX' :
+                      this.id === 'rgbBtn' ? 'RGB' : 'HSB';
+      });
+    });
+
+    function generateColors() {
+      const count = parseInt(countInput.value) || 1;
+      if (count < 1 || count > 100) {
+        alert("Please enter a number between 1 and 100.");
+        return;
+      }
+
+      if (pickedColors.size >= totalColors) {
+        alert("All possible colors have been used!");
+        return;
+      }
+
+      const newColors = [];
+      let attempts = 0;
+      const maxAttempts = count * 1000;
+
+      while (newColors.length < count && attempts < maxAttempts) {
+        attempts++;
+        const r = Math.floor(Math.random() * 256);
+        const g = Math.floor(Math.random() * 256);
+        const b = Math.floor(Math.random() * 256);
+        const hex = rgbToHex(r, g, b);
+
+        if (pickedColors.has(hex)) continue;
+
+        const hsb = rgbToHSB(r, g, b);
+        newColors.push({ r, g, b, hex, hsb });
+        pickedColors.add(hex);
+      }
+
+      if (newColors.length === 0) {
+        alert("Could not generate any new unique colors.");
+        return;
+      }
+
+      // Save to localStorage
+      localStorage.setItem('pickedColors', JSON.stringify([...pickedColors]));
+
+      // Update UI
+      updateColorList(newColors);
+      updateRemaining();
+    }
+
+    function updateColorList(colors) {
+      colorList.innerHTML = '';
+      colors.forEach(color => {
+        const li = document.createElement('li');
+        li.className = 'color-item';
+
+        let text;
+        if (displayMode === 'HEX') {
+          text = color.hex;
+        } else if (displayMode === 'RGB') {
+          text = `RGB(${color.r}, ${color.g}, ${color.b})`;
+        } else {
+          text = `HSB(${color.hsb.h}°, ${color.hsb.s}%, ${color.hsb.b}%)`;
+        }
+
+        li.innerHTML = `
+          <div class="color-swatch" style="background-color: ${color.hex};"></div>
+          <span class="color-value">${text}</span>
+        `;
+        colorList.appendChild(li);
+      });
+    }
+
+    function confirmReset() {
+      if (confirm("Are you sure you want to reset all picked colors? This cannot be undone.")) {
+        resetColors();
+      }
+    }
+
+    function resetColors() {
+      localStorage.removeItem('pickedColors
