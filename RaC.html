@@ -242,4 +242,52 @@
     }
 
     function resetColors() {
-      localStorage.removeItem('pickedColors
+      localStorage.removeItem('pickedColors');
+      pickedColors.clear();
+      colorList.innerHTML = '';
+      updateRemaining();
+    }
+
+    function updateRemaining() {
+      const remaining = totalColors - pickedColors.size;
+      remainingEl.innerText = `Remaining Colors: ${remaining}`;
+    }
+
+    function rgbToHex(r, g, b) {
+      return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase();
+    }
+
+    function rgbToHSB(r, g, b) {
+      let rPercent = r / 255, gPercent = g / 255, bPercent = b / 255;
+      let max = Math.max(rPercent, gPercent, bPercent);
+      let min = Math.min(rPercent, gPercent, bPercent);
+      let delta = max - min;
+
+      let h = 0;
+      if (delta !== 0) {
+        if (max === rPercent) {
+          h = ((gPercent - bPercent) / delta) % 6;
+        } else if (max === gPercent) {
+          h = (bPercent - rPercent) / delta + 2;
+        } else {
+          h = (rPercent - gPercent) / delta + 4;
+        }
+        h = Math.round(h * 60);
+        if (h < 0) h += 360;
+      }
+
+      let s = max === 0 ? 0 : (delta / max) * 100;
+      let bValue = max * 100;
+
+      return {
+        h: Math.round(h),
+        s: Math.round(s),
+        b: Math.round(bValue)
+      };
+    }
+
+    // Initialize
+    updateRemaining();
+  </script>
+</body>
+</html>
