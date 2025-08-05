@@ -13,7 +13,7 @@
       transition: background 0.5s;
     }
     h1 {
-      font-size: 40px; /* 50% smaller than original 80px */
+      font-size: 40px;
       font-weight: bold;
       color: white;
       text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
@@ -25,16 +25,141 @@
       font-size: 18px;
       font-weight: 400;
       cursor: pointer;
-      margin: 20px;
+      margin: 10px;
     }
     #rgbText {
-      font-size: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: white;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+      display: none;
+    }
+    #hsbText {
+      font-size: 22px; /* larger than RGB now */
+      font-weight: bold;
+      color: white;
+      text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+      display: none;
+    }
+    #remainingColors {
+      font-size: 18px;
       font-weight: bold;
       color: white;
       text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
     }
-    #hsbText {
-      font-size: 15px; /* 25% smaller than 20px RGB text */
+    .controls {
+      margin: 10px;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1 id="colorText">#FFFFFF</h1>
+  <p id="rgbText">RGB: 255, 255, 255</p>
+  <p id="hsbText">HSB: 0°, 0%, 100%</p>
+
+  <div class="controls">
+    <label><input type="checkbox" id="showRGB" checked> Show RGB</label>
+    <label><input type="checkbox" id="showHSB" checked> Show HSB</label><br/>
+    <label>How many colors to generate: <input type="number" id="colorCount" min="1" value="1" style="width: 60px;"></label>
+  </div>
+
+  <button onclick="generateColor()">Generate Random Color(s)</button>
+  <button onclick="confirmReset()">Reset Colors</button>
+  <p id="remainingColors">Remaining Colors: 16777216</p>
+
+  <script>
+    let pickedColors = new Set(JSON.parse(localStorage.getItem('pickedColors')) || []);
+    const totalColors = 16777216;
+
+    function generateColor() {
+      const count = parseInt(document.getElementById('colorCount').value) || 1;
+      let lastHex = "#FFFFFF", lastRGB = "RGB: 255, 255, 255", lastHSB = "HSB: 0°, 0%, 100%";
+      let generated = 0;
+
+      while (generated < count && pickedColors.size < totalColors) {
+        let r = Math.floor(Math.random() * 256);
+        let g = Math.floor(Math.random() * 256);
+        let b = Math.floor(Math.random() * 256);
+        let hex = rgbToHex(r, g, b);
+
+        if (pickedColors.has(hex)) continue;
+
+        pickedColors.add(hex);
+        generated++;
+        lastHex = hex;
+        lastRGB = `RGB: ${r}, ${g}, ${b}`;
+        const hsb = rgbToHSB(r, g, b);
+        lastHSB = `HSB: ${hsb.h}°, ${hsb.s}%, ${hsb.b}%`;
+      }
+
+      localStorage.setItem('pickedColors', JSON.stringify([...pickedColors]));
+      document.getElementById('colorText').innerText = lastHex;
+      document.body.style.backgroundColor = lastHex;
+      document.getElementById('rgbText').innerText = lastRGB;
+      document.getElementById('hsbText').innerText = lastHSB;
+
+      updateRemaining();
+      updateVisibility();
+    }
+
+    function confirmReset() {
+      if (confirm("Are you sure you want to reset all picked colors? This cannot be undone.")) {
+        resetColors();
+      }
+    }
+
+    function resetColors() {
+      localStorage.removeItem('pickedColors');
+      pickedColors.clear();
+      updateRemaining();
+      document.body.style.backgroundColor = "#FFFFFF";
+      document.getElementById('colorText').innerText = "#FFFFFF";
+      document.getElementById('rgbText').innerText = "RGB: 255, 255, 255";
+      document.getElementById('hsbText').innerText = "HSB: 0°, 0%, 100%";
+    }
+
+    function updateRemaining() {
+      const remaining = totalColors - pickedColors.size;
+      document.getElementById('remainingColors').innerText = `Remaining Colors: ${remaining}`;
+    }
+
+    function updateVisibility() {
+      document.getElementById('rgbText').style.display = document.getElementById('showRGB').checked ? 'block' : 'none';
+      document.getElementById('hsbText').style.display = document.getElementById('showHSB').checked ? 'block' : 'none';
+    }
+
+    function rgbToHex(r, g, b) {
+      return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase();
+    }
+
+    function rgbToHSB(r, g, b) {
+      const rP = r / 255, gP = g / 255, bP = b / 255;
+      const max = Math.max(rP, gP, bP), min = Math.min(rP, gP, bP);
+      const delta = max - min;
+      let h = 0;
+
+      if (delta !== 0) {
+        if (max === rP) h = ((gP - bP) / delta) % 6;
+        else if (max === gP) h = (bP - rP) / delta + 2;
+        else h = (rP - gP) / delta + 4;
+        h = Math.round(h * 60);
+        if (h < 0) h += 360;
+      }
+
+      const s = max === 0 ? 0 : (delta / max) * 100;
+      const bVal = max * 100;
+      return { h: Math.round(h), s: Math.round(s), b: Math.round(bVal) };
+    }
+
+    document.getElementById('showRGB').addEventListener('change', updateVisibility);
+    document.getElementById('showHSB').addEventListener('change', updateVisibility);
+
+    updateRemaining();
+    updateVisibility();
+  </script>
+</body>
+</html>      font-size: 15px; /* 25% smaller than 20px RGB text */
       font-weight: bold;
       color: white;
       text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
