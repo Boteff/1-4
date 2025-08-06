@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Battery Maintenance - PPE Tracker</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      color: #2c3e50;
+    }
+    .ppe-list {
+      list-style: none;
+      padding: 0;
+    }
+    .ppe-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 15px;
+      background-color: white;
+      border: 1px solid #ddd;
+      margin-bottom: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .ppe-item:hover {
+      background-color: #f0f7ff;
+      border-color: #007acc;
+    }
+    .ppe-name {
+      font-weight: 600;
+    }
+    .ppe-date {
+      color: #555;
+      font-size: 14px;
+      min-width: 100px;
+      text-align: right;
+    }
+    .last-updated {
+      text-align: center;
+      font-size: 12px;
+      color: #777;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Battery Maintenance PPE Check</h1>
+  <p style="text-align:center; color:#555;">Click any item to update its last maintenance date.</p>
+
+  <ul class="ppe-list" id="ppeList"></ul>
+
+  <p class="last-updated">Dates are saved automatically in your browser.</p>
+
+  <script>
+    // 👇 Replace this list with your actual PPE items
+    const ppeItems = [
+      "VNA 01",
+      "VNA 02",
+      "VNA 03",
+      "FL 046",
+      "FL 988",
+      "FL 356",
+      "Small N20",
+      "Long N20",
+    ];
+
+    const ppeList = document.getElementById('ppeList');
+    let ppeData = JSON.parse(localStorage.getItem('ppeData')) || {};
+
+    // Initialize today's date in "YYYY-MM-DD" format
+    function today() {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    // Format date for display (optional: change to "MM/DD/YYYY")
+    function formatDate(dateStr) {
+      if (!dateStr) return 'Never';
+      const options = { year: 'numeric', month: 'short', day: 'numeric' };
+      return new Date(dateStr).toLocaleDateString(undefined, options);
+    }
+
+    // Render the list
+    function renderList() {
+      ppeList.innerHTML = '';
+      ppeItems.forEach(name => {
+        const date = ppeData[name] || '';
+        const li = document.createElement('li');
+        li.className = 'ppe-item';
+        li.innerHTML = `
+          <span class="ppe-name">${name}</span>
+          <span class="ppe-date">${formatDate(date)}</span>
+        `;
+        li.addEventListener('click', () => {
+          ppeData[name] = today();
+          localStorage.setItem('ppeData', JSON.stringify(ppeData));
+          renderList();
+        });
+        ppeList.appendChild(li);
+      });
+    }
+
+    // First render
+    renderList();
+  </script>
+</body>
+</html>
