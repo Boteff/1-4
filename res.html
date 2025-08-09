@@ -110,6 +110,22 @@
     </div>
   </div>
 
+  <!-- Aspect Ratio Calculator -->
+  <div class="calculator" id="calcAR">
+    <div class="calculator-title">Aspect Ratio Calculator</div>
+
+    <div class="row">
+      <strong>Aspect Ratio:</strong> 
+      <input type="text" id="aspectRatio" placeholder="e.g., 16:9" oninput="calculateResolution()">
+      <button onclick="bumpUpResolution()">Bump Up</button>
+    </div>
+
+    <div class="row">
+      <strong>Calculated Resolution:</strong> 
+      <span id="calculatedWidth"></span> x <span id="calculatedHeight"></span>
+    </div>
+  </div>
+
   <script>
     let nrAspect = { w: 1, h: 1 }; // Default
 
@@ -208,6 +224,30 @@
       saveState();
     }
 
+    function calculateResolution() {
+      const aspectRatio = document.getElementById('aspectRatio').value;
+      const [widthPart, heightPart] = aspectRatio.split(":").map(Number);
+      if (widthPart && heightPart) {
+        const width = 384;
+        const height = Math.round((width * heightPart) / widthPart);
+        document.getElementById('calculatedWidth').innerText = width;
+        document.getElementById('calculatedHeight').innerText = height;
+      }
+    }
+
+    function bumpUpResolution() {
+      const width = parseInt(document.getElementById('calculatedWidth').innerText);
+      const height = parseInt(document.getElementById('calculatedHeight').innerText);
+      const aspectRatio = document.getElementById('aspectRatio').value;
+      const [widthPart, heightPart] = aspectRatio.split(":").map(Number);
+      if (width && height && widthPart && heightPart) {
+        const newWidth = width + (widthPart * 4);
+        const newHeight = Math.round((newWidth * heightPart) / widthPart);
+        document.getElementById('calculatedWidth').innerText = newWidth;
+        document.getElementById('calculatedHeight').innerText = newHeight;
+      }
+    }
+
     function saveState() {
       const state = {
         widthR: document.getElementById('widthR').value,
@@ -215,7 +255,10 @@
         widthNR: document.getElementById('widthNR').value,
         heightNR: document.getElementById('heightNR').value,
         customWidth: document.getElementById('customWidth').value,
-        nrAspect: nrAspect
+        nrAspect: nrAspect,
+        aspectRatio: document.getElementById('aspectRatio').value,
+        calculatedWidth: document.getElementById('calculatedWidth').innerText,
+        calculatedHeight: document.getElementById('calculatedHeight').innerText
       };
       localStorage.setItem('arc_state', JSON.stringify(state));
     }
@@ -231,9 +274,13 @@
           document.getElementById('heightNR').value = state.heightNR;
           document.getElementById('customWidth').value = state.customWidth || '';
           nrAspect = state.nrAspect || { w: 1, h: 1 };
+          document.getElementById('aspectRatio').value = state.aspectRatio || '';
+          document.getElementById('calculatedWidth').innerText = state.calculatedWidth || '';
+          document.getElementById('calculatedHeight').innerText = state.calculatedHeight || '';
           updateRatio('R');
           syncNRHeight();
           updateAutoHeightFromCustomWidth();
+          calculateResolution();
         } catch (e) {
           console.error("Failed to load state:", e);
         }
