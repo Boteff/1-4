@@ -149,4 +149,158 @@
       let heightInput = document.getElementById('height' + calc);
       let widthInput = document.getElementById('width' + calc);
       let newHeight = parseInt(heightInput.value, 10) + amount;
-      if (newHeight >= 16 && newHeight <= parseInt(widthInput.value
+      if (newHeight >= 16 && newHeight <= parseInt(widthInput.value) * 2) {
+        heightInput.value = newHeight;
+        updateRatio(calc);
+        saveState();
+      }
+    }
+
+    function resetHeight(calc) {
+      let width = parseInt(document.getElementById('width' + calc).value, 10);
+      document.getElementById('height' + calc).value = width;
+      updateRatio(calc);
+      saveState();
+    }
+
+    function setAspectRatio(calc, wPart, hPart) {
+      let width = parseInt(document.getElementById('width' + calc).value, 10);
+      let newHeight = Math.round((width * hPart) / wPart);
+      document.getElementById('height' + calc).value = newHeight;
+      updateRatio(calc);
+      saveState();
+    }
+
+    function updateRatio(calc) {
+      let width = parseInt(document.getElementById('width' + calc).value, 10);
+      let height = parseInt(document.getElementById('height' + calc).value, 10);
+      if (!isNaN(width) && !isNaN(height) && width > 0 && height > 0) {
+        let divisor = gcd(width, height);
+        let ratioText = (width / divisor) + ":" + (height / divisor);
+        document.getElementById('ratioButton' + calc).innerText = ratioText;
+        if (calc === 'R') {
+          updateAutoHeightFromCustomWidth();
+        }
+      }
+    }
+
+    function copyAspectFromR() {
+      let widthR = parseInt(document.getElementById('widthR').value);
+      let heightR = parseInt(document.getElementById('heightR').value);
+      let divisor = gcd(widthR, heightR);
+      nrAspect = {
+        w: widthR / divisor,
+        h: heightR / divisor
+      };
+      syncNRHeight();
+      updateNRRatioDisplay();
+      saveState();
+    }
+
+    function syncNRHeight() {
+      let widthNR = parseInt(document.getElementById('widthNR').value);
+      let newHeight = Math.round((widthNR * nrAspect.h) / nrAspect.w);
+      document.getElementById('heightNR').value = newHeight;
+      updateNRRatioDisplay();
+    }
+
+    function updateNRRatioDisplay() {
+      document.getElementById('ratioButtonNR').innerText = nrAspect.w + ":" + nrAspect.h;
+    }
+
+    function noop() {
+      // Do nothing
+    }
+
+    function updateAutoHeightFromCustomWidth() {
+      const customWidth = parseInt(document.getElementById('customWidth').value);
+      const ratioText = document.getElementById('ratioButtonR').innerText;
+      const [rw, rh] = ratioText.split(":").map(Number);
+      if (!isNaN(customWidth) && rw && rh) {
+        const autoHeight = Math.round((customWidth * rh) / rw);
+        document.getElementById('autoHeightResult').innerText = `= ${autoHeight}`;
+      } else {
+        document.getElementById('autoHeightResult').innerText = '';
+      }
+      saveState();
+    }
+
+    function calculateResolution() {
+      const aspectRatio = document.getElementById('aspectRatio').value;
+      const [widthPart, heightPart] = aspectRatio.split(":").map(Number);
+      if (widthPart && heightPart) {
+        const width = 384;
+        const height = Math.round((width * heightPart) / widthPart);
+        document.getElementById('calculatedWidth').innerText = width;
+        document.getElementById('calculatedHeight').innerText = height;
+      }
+    }
+
+    function bumpUpResolution() {
+      const width = parseInt(document.getElementById('calculatedWidth').innerText);
+      const height = parseInt(document.getElementById('calculatedHeight').innerText);
+      const aspectRatio = document.getElementById('aspectRatio').value;
+      const [widthPart, heightPart] = aspectRatio.split(":").map(Number);
+      if (width && height && widthPart && heightPart) {
+        const newWidth = width + (widthPart * 1);
+        const newHeight = Math.round((newWidth * heightPart) / widthPart);
+        document.getElementById('calculatedWidth').innerText = newWidth;
+        document.getElementById('calculatedHeight').innerText = newHeight;
+      }
+    }
+
+    function resetAspectRatio() {
+      document.getElementById('aspectRatio').value = '';
+      document.getElementById('calculatedWidth').innerText = '';
+      document.getElementById('calculatedHeight').innerText = '';
+    }
+
+    function saveState() {
+      const state = {
+        widthR: document.getElementById('widthR').value,
+        heightR: document.getElementById('heightR').value,
+        widthNR: document.getElementById('widthNR').value,
+        heightNR: document.getElementById('heightNR').value,
+        customWidth: document.getElementById('customWidth').value,
+        nrAspect: nrAspect,
+        aspectRatio: document.getElementById('aspectRatio').value,
+        calculatedWidth: document.getElementById('calculatedWidth').innerText,
+        calculatedHeight: document.getElementById('calculatedHeight').innerText
+      };
+      localStorage.setItem('arc_state', JSON.stringify(state));
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem('arc_state');
+      if (saved) {
+        try {
+          const state = JSON.parse(saved);
+          document.getElementById('widthR').value = state.widthR;
+          document.getElementById('heightR').value = state.heightR;
+          document.getElementById('widthNR').value = state.widthNR;
+          document.getElementById('heightNR').value = state.heightNR;
+          document.getElementById('customWidth').value = state.customWidth || '';
+          nrAspect = state.nrAspect || { w: 1, h: 1 };
+          document.getElementById('aspectRatio').value = state.aspectRatio || '';
+          document.getElementById('calculatedWidth').innerText = state.calculatedWidth || '';
+          document.getElementById('calculatedHeight').innerText = state.calculatedHeight || '';
+          updateRatio('R');
+          syncNRHeight();
+          updateAutoHeightFromCustomWidth();
+          calculateResolution();
+        } catch (e) {
+          console.error("Failed to load state:", e);
+        }
+      }
+    }
+
+    loadState();
+    updateRatio('R');
+    updateNRRatioDisplay();
+
+    document.getElementById('aspectRatio').addEventListener('input', calculateResolution);
+    document.getElementById('bumpUpResolution').addEventListener('click', bumpUpResolution);
+    document.getElementById('resetAspectRatio').addEventListener('click', resetAspectRatio);
+  </script>
+</body>
+</html>
