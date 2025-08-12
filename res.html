@@ -242,7 +242,7 @@
       const aspectRatio = document.getElementById('aspectRatio').value;
       const [widthPart, heightPart] = aspectRatio.split(":").map(Number);
       if (width && height && widthPart && heightPart) {
-        const newWidth = width + (widthPart * 1);
+        const newWidth = width + (widthPart * 2);
         const newHeight = Math.round((newWidth * heightPart) / widthPart);
         document.getElementById('calculatedWidth').innerText = newWidth;
         document.getElementById('calculatedHeight').innerText = newHeight;
