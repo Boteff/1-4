@@ -237,17 +237,17 @@
     }
 
     function bumpUpResolution() {
-      const width = parseInt(document.getElementById('calculatedWidth').innerText);
-      const height = parseInt(document.getElementById('calculatedHeight').innerText);
-      const aspectRatio = document.getElementById('aspectRatio').value;
-      const [widthPart, heightPart] = aspectRatio.split(":").map(Number);
-      if (width && height && widthPart && heightPart) {
-        const newWidth = width + (widthPart * 2);
-        const newHeight = Math.round((newWidth * heightPart) / widthPart);
-        document.getElementById('calculatedWidth').innerText = newWidth;
-        document.getElementById('calculatedHeight').innerText = newHeight;
-      }
-    }
+  const width = parseInt(document.getElementById('calculatedWidth').innerText);
+  const height = parseInt(document.getElementById('calculatedHeight').innerText);
+  const aspectRatio = document.getElementById('aspectRatio').value;
+  const [widthPart, heightPart] = aspectRatio.split(":").map(Number);
+  if (width && height && widthPart && heightPart) {
+    const newWidth = width + 4; // Always increment the width by desired pixels
+    const newHeight = Math.round((newWidth * heightPart) / widthPart);
+    document.getElementById('calculatedWidth').innerText = newWidth;
+    document.getElementById('calculatedHeight').innerText = newHeight;
+  }
+}
 
     function resetAspectRatio() {
       document.getElementById('aspectRatio').value = '';
