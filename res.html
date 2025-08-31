@@ -12,7 +12,7 @@
     }
     .container {
       display: inline-block;
-      text-align: center;
+      text-align: left;
       width: 300px;
       margin: 0 auto;
     }
@@ -63,6 +63,15 @@
       gap: 10px;
       justify-content: center;
     }
+    #notes {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      width: 100%;
+      height: 150px;
+      resize: vertical;
+      font-size: 14px;
+    }
   </style>
 </head>
 <body>
@@ -95,6 +104,43 @@
 
     <div class="separator"></div>
 
+    <!-- Resolution Booster -->
+    <div class="calculator" id="calcAR">
+      <div class="calculator-title">Resolution Booster</div>
+
+      <div class="row input-group">
+        <strong>Aspect Ratio:</strong>
+        <input type="text" id="aspectRatio" placeholder="e.g., 16:9" oninput="debouncedCalculateResolution()">
+        <button onclick="copyRatio()">Copy Ratio</button>
+      </div>
+
+      <div class="row input-group">
+        <strong>Default Width:</strong>
+        <input type="number" id="defaultWidth" value="400" oninput="updateDefaultWidth()">
+      </div>
+
+      <div class="row">
+        <strong>Calculated Resolution:</strong>
+        <span id="calculatedWidth"></span> x <span id="calculatedHeight"></span>
+      </div>
+
+      <div class="row input-group">
+        <strong>Bump Up Value:</strong>
+        <input type="number" id="bumpUpValue" value="8" oninput="updateBumpUpValue()">
+        <button onclick="bumpUpResolution()">Bump Up</button>
+      </div>
+    </div>
+
+    <div class="separator"></div>
+
+    <!-- Notes -->
+    <div class="calculator" id="notesSection">
+      <div class="calculator-title">Notes</div>
+      <textarea id="notes" placeholder="Take notes here..."></textarea>
+    </div>
+
+    <div class="separator"></div>
+
     <!-- Aspect Ratio Finder -->
     <div class="calculator" id="calcManual">
       <div class="calculator-title">Aspect Ratio Finder</div>
@@ -112,30 +158,6 @@
       <div class="row">
         <strong>Aspect Ratio:</strong>
         <span id="manualAspectRatio"></span>
-      </div>
-    </div>
-
-    <div class="separator"></div>
-
-    <!-- Resolution Booster -->
-    <div class="calculator" id="calcAR">
-      <div class="calculator-title">Resolution Booster</div>
-
-      <div class="row input-group">
-        <strong>Aspect Ratio:</strong>
-        <input type="text" id="aspectRatio" placeholder="e.g., 16:9" oninput="debouncedCalculateResolution()">
-        <button onclick="copyRatio()">Copy Ratio</button>
-      </div>
-
-      <div class="row">
-        <strong>Calculated Resolution:</strong>
-        <span id="calculatedWidth"></span> x <span id="calculatedHeight"></span>
-      </div>
-
-      <div class="row input-group">
-        <strong>Bump Up Value:</strong>
-        <input type="number" id="bumpUpValue" value="8" oninput="updateBumpUpValue()">
-        <button onclick="bumpUpResolution()">Bump Up</button>
       </div>
     </div>
   </div>
@@ -207,8 +229,9 @@
     function calculateResolution() {
       const aspectRatio = document.getElementById('aspectRatio').value;
       const [widthPart, heightPart] = aspectRatio.split(":").map(Number);
+      const defaultWidth = parseInt(document.getElementById('defaultWidth').value, 10);
       if (widthPart && heightPart) {
-        const width = 400;
+        const width = defaultWidth;
         const height = Math.round((width * heightPart) / widthPart);
         document.getElementById('calculatedWidth').innerText = width;
         document.getElementById('calculatedHeight').innerText = height;
@@ -242,6 +265,12 @@
       localStorage.setItem('bumpUpValue', bumpUpValue);
     }
 
+    function updateDefaultWidth() {
+      const defaultWidth = document.getElementById('defaultWidth').value;
+      localStorage.setItem('defaultWidth', defaultWidth);
+      calculateResolution();
+    }
+
     function saveState() {
       const state = {
         widthR: document.getElementById('widthR').value,
@@ -250,7 +279,8 @@
         manualHeight: document.getElementById('manualHeight').value,
         aspectRatio: document.getElementById('aspectRatio').value,
         calculatedWidth: document.getElementById('calculatedWidth').innerText,
-        calculatedHeight: document.getElementById('calculatedHeight').innerText
+        calculatedHeight: document.getElementById('calculatedHeight').innerText,
+        notes: document.getElementById('notes').value
       };
       localStorage.setItem('arc_state', JSON.stringify(state));
     }
@@ -258,6 +288,7 @@
     function loadState() {
       const saved = localStorage.getItem('arc_state');
       const savedBumpUpValue = localStorage.getItem('bumpUpValue');
+      const savedDefaultWidth = localStorage.getItem('defaultWidth');
       if (saved) {
         try {
           const state = JSON.parse(saved);
@@ -268,8 +299,12 @@
           document.getElementById('aspectRatio').value = state.aspectRatio || '';
           document.getElementById('calculatedWidth').innerText = state.calculatedWidth || '';
           document.getElementById('calculatedHeight').innerText = state.calculatedHeight || '';
+          document.getElementById('notes').value = state.notes || '';
           if (savedBumpUpValue) {
             document.getElementById('bumpUpValue').value = savedBumpUpValue;
+          }
+          if (savedDefaultWidth) {
+            document.getElementById('defaultWidth').value = savedDefaultWidth;
           }
           updateRatio('R');
           calculateManualAspectRatio();
