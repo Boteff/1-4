@@ -44,15 +44,17 @@
     #ratioButtonR {
       background-color: #ff4d4d;
     }
-    .calc-block {
-      margin-bottom: 20px;
-    }
     .row {
       margin: 10px 0;
     }
     .separator {
       border-top: 2px solid #ccc;
       margin: 20px 0;
+    }
+    .input-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
   </style>
 </head>
@@ -62,23 +64,18 @@
   <div class="calculator" id="calcR">
     <div class="calculator-title">Resolution / Aspect Ratio</div>
 
-    <div class="row">
+    <div class="row input-group">
       <strong>Width:</strong>
       <button onclick="adjustWidth('R', -64)">-</button>
-      <input type="number" id="widthR" value="256" oninput="updateRatio('R')" min="16" max="9999">
+      <input type="number" id="widthR" value="256" oninput="debouncedUpdateRatio('R')" min="16" max="9999">
       <button onclick="adjustWidth('R', 64)">+</button>
     </div>
 
-    <div class="row">
-      <input type="number" id="customWidth" placeholder="Width" oninput="updateAutoHeightFromCustomWidth()">
-    </div>
-
-    <div class="row">
+    <div class="row input-group">
       <strong>Height:</strong>
       <button onclick="adjustHeight('R', -8)">-</button>
-      <input type="number" id="heightR" value="256" oninput="updateRatio('R')" min="16" max="9999">
+      <input type="number" id="heightR" value="256" oninput="debouncedUpdateRatio('R')" min="16" max="9999">
       <button onclick="adjustHeight('R', 8)">+</button>
-      <span id="autoHeightResult"></span>
     </div>
 
     <div id="aspectButtons">
@@ -94,14 +91,14 @@
   <div class="calculator" id="calcManual">
     <div class="calculator-title">Aspect Ratio Finder</div>
 
-    <div class="row">
+    <div class="row input-group">
       <strong>Width:</strong>
-      <input type="number" id="manualWidth" value="256" oninput="calculateManualAspectRatio()">
+      <input type="number" id="manualWidth" value="256" oninput="debouncedCalculateManualAspectRatio()">
     </div>
 
-    <div class="row">
+    <div class="row input-group">
       <strong>Height:</strong>
-      <input type="number" id="manualHeight" value="256" oninput="calculateManualAspectRatio()">
+      <input type="number" id="manualHeight" value="256" oninput="debouncedCalculateManualAspectRatio()">
     </div>
 
     <div class="row">
@@ -116,9 +113,9 @@
   <div class="calculator" id="calcAR">
     <div class="calculator-title">Resolution Booster</div>
 
-    <div class="row">
+    <div class="row input-group">
       <strong>Aspect Ratio:</strong>
-      <input type="text" id="aspectRatio" placeholder="e.g., 16:9" oninput="calculateResolution()">
+      <input type="text" id="aspectRatio" placeholder="e.g., 16:9" oninput="debouncedCalculateResolution()">
       <button onclick="copyRatio()">Copy Ratio</button>
     </div>
 
@@ -127,7 +124,7 @@
       <span id="calculatedWidth"></span> x <span id="calculatedHeight"></span>
     </div>
 
-    <div class="row">
+    <div class="row input-group">
       <strong>Bump Up Value:</strong>
       <input type="number" id="bumpUpValue" value="8" oninput="updateBumpUpValue()">
       <button onclick="bumpUpResolution()">Bump Up</button>
@@ -182,21 +179,7 @@
         let divisor = gcd(width, height);
         let ratioText = (width / divisor) + ":" + (height / divisor);
         document.getElementById('ratioButton' + calc).innerText = ratioText;
-        updateAutoHeightFromCustomWidth();
       }
-    }
-
-    function updateAutoHeightFromCustomWidth() {
-      const customWidth = parseInt(document.getElementById('customWidth').value);
-      const ratioText = document.getElementById('ratioButtonR').innerText;
-      const [rw, rh] = ratioText.split(":").map(Number);
-      if (!isNaN(customWidth) && rw && rh) {
-        const autoHeight = Math.round((customWidth * rh) / rw);
-        document.getElementById('autoHeightResult').innerText = `= ${autoHeight}`;
-      } else {
-        document.getElementById('autoHeightResult').innerText = '';
-      }
-      saveState();
     }
 
     function calculateManualAspectRatio() {
@@ -241,6 +224,8 @@
     function copyRatio() {
       const ratioText = document.getElementById('ratioButtonR').innerText;
       document.getElementById('aspectRatio').value = ratioText;
+      document.getElementById('calculatedWidth').innerText = '';
+      document.getElementById('calculatedHeight').innerText = '';
     }
 
     function updateBumpUpValue() {
@@ -252,7 +237,6 @@
       const state = {
         widthR: document.getElementById('widthR').value,
         heightR: document.getElementById('heightR').value,
-        customWidth: document.getElementById('customWidth').value,
         manualWidth: document.getElementById('manualWidth').value,
         manualHeight: document.getElementById('manualHeight').value,
         aspectRatio: document.getElementById('aspectRatio').value,
@@ -270,7 +254,6 @@
           const state = JSON.parse(saved);
           document.getElementById('widthR').value = state.widthR;
           document.getElementById('heightR').value = state.heightR;
-          document.getElementById('customWidth').value = state.customWidth || '';
           document.getElementById('manualWidth').value = state.manualWidth || '';
           document.getElementById('manualHeight').value = state.manualHeight || '';
           document.getElementById('aspectRatio').value = state.aspectRatio || '';
@@ -280,13 +263,24 @@
             document.getElementById('bumpUpValue').value = savedBumpUpValue;
           }
           updateRatio('R');
-          updateAutoHeightFromCustomWidth();
           calculateManualAspectRatio();
         } catch (e) {
           console.error("Failed to load state:", e);
         }
       }
     }
+
+    function debounce(func, wait) {
+      let timeout;
+      return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+      };
+    }
+
+    const debouncedUpdateRatio = debounce(updateRatio, 200);
+    const debouncedCalculateManualAspectRatio = debounce(calculateManualAspectRatio, 200);
+    const debouncedCalculateResolution = debounce(calculateResolution, 200);
 
     loadState();
     updateRatio('R');
