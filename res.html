@@ -126,9 +126,9 @@
 
       <div class="row input-group">
         <strong>Bump Up Value:</strong>
-        <button onclick="adjustBumpUpValue(-8)">-</button>
+        <button onclick="document.getElementById('bumpUpValue').value = 8">-</button>
         <input type="number" id="bumpUpValue" value="8" oninput="updateBumpUpValue()">
-        <button onclick="adjustBumpUpValue(8)">+</button>
+        <button onclick="document.getElementById('bumpUpValue').value = parseInt(document.getElementById('bumpUpValue').value) + 8">+</button>
         <button onclick="bumpUpResolution()">Bump Up</button>
       </div>
     </div>
