@@ -63,10 +63,10 @@
     <div class="calculator-title">Resolution / Aspect Ratio</div>
 
     <div class="row">
-      <strong>Width:</strong> 
-      <button onclick="adjustWidth('R', -8)">-</button>
+      <strong>Width:</strong>
+      <button onclick="adjustWidth('R', -64)">-</button>
       <input type="number" id="widthR" value="256" oninput="updateRatio('R')" min="16" max="9999">
-      <button onclick="adjustWidth('R', 32)">+</button>
+      <button onclick="adjustWidth('R', 64)">+</button>
     </div>
 
     <div class="row">
@@ -74,7 +74,7 @@
     </div>
 
     <div class="row">
-      <strong>Height:</strong> 
+      <strong>Height:</strong>
       <button onclick="adjustHeight('R', -8)">-</button>
       <input type="number" id="heightR" value="256" oninput="updateRatio('R')" min="16" max="9999">
       <button onclick="adjustHeight('R', 8)">+</button>
@@ -95,17 +95,17 @@
     <div class="calculator-title">Aspect Ratio Finder</div>
 
     <div class="row">
-      <strong>Width:</strong> 
+      <strong>Width:</strong>
       <input type="number" id="manualWidth" value="256" oninput="calculateManualAspectRatio()">
     </div>
 
     <div class="row">
-      <strong>Height:</strong> 
+      <strong>Height:</strong>
       <input type="number" id="manualHeight" value="256" oninput="calculateManualAspectRatio()">
     </div>
 
     <div class="row">
-      <strong>Aspect Ratio:</strong> 
+      <strong>Aspect Ratio:</strong>
       <span id="manualAspectRatio"></span>
     </div>
   </div>
@@ -117,14 +117,20 @@
     <div class="calculator-title">Resolution Booster</div>
 
     <div class="row">
-      <strong>Aspect Ratio:</strong> 
+      <strong>Aspect Ratio:</strong>
       <input type="text" id="aspectRatio" placeholder="e.g., 16:9" oninput="calculateResolution()">
-      <button onclick="bumpUpResolution()">Bump Up</button>
+      <button onclick="copyRatio()">Copy Ratio</button>
     </div>
 
     <div class="row">
-      <strong>Calculated Resolution:</strong> 
+      <strong>Calculated Resolution:</strong>
       <span id="calculatedWidth"></span> x <span id="calculatedHeight"></span>
+    </div>
+
+    <div class="row">
+      <strong>Bump Up Value:</strong>
+      <input type="number" id="bumpUpValue" value="8" oninput="updateBumpUpValue()">
+      <button onclick="bumpUpResolution()">Bump Up</button>
     </div>
   </div>
 
@@ -222,12 +228,24 @@
       const height = parseInt(document.getElementById('calculatedHeight').innerText);
       const aspectRatio = document.getElementById('aspectRatio').value;
       const [widthPart, heightPart] = aspectRatio.split(":").map(Number);
+      const bumpUpValue = parseInt(document.getElementById('bumpUpValue').value, 10);
       if (width && height && widthPart && heightPart) {
-        const newWidth = width + 8;
+        const newWidth = width + bumpUpValue;
         const newHeight = Math.round((newWidth * heightPart) / widthPart);
         document.getElementById('calculatedWidth').innerText = newWidth;
         document.getElementById('calculatedHeight').innerText = newHeight;
+        saveState();
       }
+    }
+
+    function copyRatio() {
+      const ratioText = document.getElementById('ratioButtonR').innerText;
+      document.getElementById('aspectRatio').value = ratioText;
+    }
+
+    function updateBumpUpValue() {
+      const bumpUpValue = document.getElementById('bumpUpValue').value;
+      localStorage.setItem('bumpUpValue', bumpUpValue);
     }
 
     function saveState() {
@@ -246,6 +264,7 @@
 
     function loadState() {
       const saved = localStorage.getItem('arc_state');
+      const savedBumpUpValue = localStorage.getItem('bumpUpValue');
       if (saved) {
         try {
           const state = JSON.parse(saved);
@@ -257,6 +276,9 @@
           document.getElementById('aspectRatio').value = state.aspectRatio || '';
           document.getElementById('calculatedWidth').innerText = state.calculatedWidth || '';
           document.getElementById('calculatedHeight').innerText = state.calculatedHeight || '';
+          if (savedBumpUpValue) {
+            document.getElementById('bumpUpValue').value = savedBumpUpValue;
+          }
           updateRatio('R');
           updateAutoHeightFromCustomWidth();
           calculateManualAspectRatio();
