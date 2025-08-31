@@ -9,8 +9,12 @@
       text-align: center;
       font-family: Arial, sans-serif;
       margin: 10px;
-      transform: scale(1.1);
-      transform-origin: center;
+    }
+    .container {
+      display: inline-block;
+      text-align: left;
+      width: 300px;
+      margin: 0 auto;
     }
     input {
       width: 60px;
@@ -57,79 +61,82 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      justify-content: center;
     }
   </style>
 </head>
 <body>
 
   <!-- Resolution / Aspect Ratio -->
-  <div class="calculator" id="calcR">
-    <div class="calculator-title">Resolution / Aspect Ratio</div>
+  <div class="container">
+    <div class="calculator" id="calcR">
+      <div class="calculator-title">Resolution / Aspect Ratio</div>
 
-    <div class="row input-group">
-      <strong>Width:</strong>
-      <button onclick="adjustWidth('R', -64)">-</button>
-      <input type="number" id="widthR" value="256" oninput="debouncedUpdateRatio('R')" min="16" max="9999">
-      <button onclick="adjustWidth('R', 64)">+</button>
+      <div class="row input-group">
+        <strong>Width:</strong>
+        <button onclick="adjustWidth('R', -64)">-</button>
+        <input type="number" id="widthR" value="256" oninput="debouncedUpdateRatio('R')" min="16" max="9999">
+        <button onclick="adjustWidth('R', 64)">+</button>
+      </div>
+
+      <div class="row input-group">
+        <strong>Height:</strong>
+        <button onclick="adjustHeight('R', -8)">-</button>
+        <input type="number" id="heightR" value="256" oninput="debouncedUpdateRatio('R')" min="16" max="9999">
+        <button onclick="adjustHeight('R', 8)">+</button>
+      </div>
+
+      <div id="aspectButtons">
+        <button onclick="setAspectRatio('R', 4, 5)">4:5</button>
+        <button class="ratioButton" id="ratioButtonR" onclick="resetHeight('R')">1:1</button>
+        <button onclick="setAspectRatio('R', 2, 3)">2:3</button>
+      </div>
     </div>
 
-    <div class="row input-group">
-      <strong>Height:</strong>
-      <button onclick="adjustHeight('R', -8)">-</button>
-      <input type="number" id="heightR" value="256" oninput="debouncedUpdateRatio('R')" min="16" max="9999">
-      <button onclick="adjustHeight('R', 8)">+</button>
+    <div class="separator"></div>
+
+    <!-- Aspect Ratio Finder -->
+    <div class="calculator" id="calcManual">
+      <div class="calculator-title">Aspect Ratio Finder</div>
+
+      <div class="row input-group">
+        <strong>Width:</strong>
+        <input type="number" id="manualWidth" value="256" oninput="debouncedCalculateManualAspectRatio()">
+      </div>
+
+      <div class="row input-group">
+        <strong>Height:</strong>
+        <input type="number" id="manualHeight" value="256" oninput="debouncedCalculateManualAspectRatio()">
+      </div>
+
+      <div class="row">
+        <strong>Aspect Ratio:</strong>
+        <span id="manualAspectRatio"></span>
+      </div>
     </div>
 
-    <div id="aspectButtons">
-      <button onclick="setAspectRatio('R', 4, 5)">4:5</button>
-      <button class="ratioButton" id="ratioButtonR" onclick="resetHeight('R')">1:1</button>
-      <button onclick="setAspectRatio('R', 2, 3)">2:3</button>
-    </div>
-  </div>
+    <div class="separator"></div>
 
-  <div class="separator"></div>
+    <!-- Resolution Booster -->
+    <div class="calculator" id="calcAR">
+      <div class="calculator-title">Resolution Booster</div>
 
-  <!-- Aspect Ratio Finder -->
-  <div class="calculator" id="calcManual">
-    <div class="calculator-title">Aspect Ratio Finder</div>
+      <div class="row input-group">
+        <strong>Aspect Ratio:</strong>
+        <input type="text" id="aspectRatio" placeholder="e.g., 16:9" oninput="debouncedCalculateResolution()">
+        <button onclick="copyRatio()">Copy Ratio</button>
+      </div>
 
-    <div class="row input-group">
-      <strong>Width:</strong>
-      <input type="number" id="manualWidth" value="256" oninput="debouncedCalculateManualAspectRatio()">
-    </div>
+      <div class="row">
+        <strong>Calculated Resolution:</strong>
+        <span id="calculatedWidth"></span> x <span id="calculatedHeight"></span>
+      </div>
 
-    <div class="row input-group">
-      <strong>Height:</strong>
-      <input type="number" id="manualHeight" value="256" oninput="debouncedCalculateManualAspectRatio()">
-    </div>
-
-    <div class="row">
-      <strong>Aspect Ratio:</strong>
-      <span id="manualAspectRatio"></span>
-    </div>
-  </div>
-
-  <div class="separator"></div>
-
-  <!-- Resolution Booster -->
-  <div class="calculator" id="calcAR">
-    <div class="calculator-title">Resolution Booster</div>
-
-    <div class="row input-group">
-      <strong>Aspect Ratio:</strong>
-      <input type="text" id="aspectRatio" placeholder="e.g., 16:9" oninput="debouncedCalculateResolution()">
-      <button onclick="copyRatio()">Copy Ratio</button>
-    </div>
-
-    <div class="row">
-      <strong>Calculated Resolution:</strong>
-      <span id="calculatedWidth"></span> x <span id="calculatedHeight"></span>
-    </div>
-
-    <div class="row input-group">
-      <strong>Bump Up Value:</strong>
-      <input type="number" id="bumpUpValue" value="8" oninput="updateBumpUpValue()">
-      <button onclick="bumpUpResolution()">Bump Up</button>
+      <div class="row input-group">
+        <strong>Bump Up Value:</strong>
+        <input type="number" id="bumpUpValue" value="8" oninput="updateBumpUpValue()">
+        <button onclick="bumpUpResolution()">Bump Up</button>
+      </div>
     </div>
   </div>
 
