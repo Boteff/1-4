@@ -126,7 +126,9 @@
 
       <div class="row input-group">
         <strong>Bump Up Value:</strong>
+        <button onclick="adjustBumpUpValue(-8)">-</button>
         <input type="number" id="bumpUpValue" value="8" oninput="updateBumpUpValue()">
+        <button onclick="adjustBumpUpValue(8)">+</button>
         <button onclick="bumpUpResolution()">Bump Up</button>
       </div>
     </div>
@@ -269,6 +271,14 @@
       const defaultWidth = document.getElementById('defaultWidth').value;
       localStorage.setItem('defaultWidth', defaultWidth);
       calculateResolution();
+    }
+
+    function adjustBumpUpValue(amount) {
+      let bumpUpValue = parseInt(document.getElementById('bumpUpValue').value, 10);
+      bumpUpValue += amount;
+      if (bumpUpValue < 0) bumpUpValue = 0;
+      document.getElementById('bumpUpValue').value = bumpUpValue;
+      updateBumpUpValue();
     }
 
     function saveState() {
