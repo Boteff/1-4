@@ -127,7 +127,7 @@
       <div class="row input-group">
         <strong>Bump Up Value:</strong>
         <button onclick="document.getElementById('bumpUpValue').value = 8">-</button>
-        <input type="number" id="bumpUpValue" value="8" oninput="updateBumpUpValue()">
+        <input type="number" id="bumpUpValue" value="8" oninput="saveState()">
         <button onclick="document.getElementById('bumpUpValue').value = parseInt(document.getElementById('bumpUpValue').value) + 8">+</button>
         <button onclick="bumpUpResolution()">Bump Up</button>
       </div>
@@ -138,7 +138,7 @@
     <!-- Notes -->
     <div class="calculator" id="notesSection">
       <div class="calculator-title">Notes</div>
-      <textarea id="notes" placeholder="Take notes here..."></textarea>
+      <textarea id="notes" placeholder="Take notes here..." oninput="saveState()"></textarea>
     </div>
 
     <div class="separator"></div>
@@ -273,14 +273,6 @@
       calculateResolution();
     }
 
-    function adjustBumpUpValue(amount) {
-      let bumpUpValue = parseInt(document.getElementById('bumpUpValue').value, 10);
-      bumpUpValue += amount;
-      if (bumpUpValue < 0) bumpUpValue = 0;
-      document.getElementById('bumpUpValue').value = bumpUpValue;
-      updateBumpUpValue();
-    }
-
     function saveState() {
       const state = {
         widthR: document.getElementById('widthR').value,
@@ -290,7 +282,8 @@
         aspectRatio: document.getElementById('aspectRatio').value,
         calculatedWidth: document.getElementById('calculatedWidth').innerText,
         calculatedHeight: document.getElementById('calculatedHeight').innerText,
-        notes: document.getElementById('notes').value
+        notes: document.getElementById('notes').value,
+        bumpUpValue: document.getElementById('bumpUpValue').value
       };
       localStorage.setItem('arc_state', JSON.stringify(state));
     }
@@ -310,6 +303,7 @@
           document.getElementById('calculatedWidth').innerText = state.calculatedWidth || '';
           document.getElementById('calculatedHeight').innerText = state.calculatedHeight || '';
           document.getElementById('notes').value = state.notes || '';
+          document.getElementById('bumpUpValue').value = state.bumpUpValue || '8';
           if (savedBumpUpValue) {
             document.getElementById('bumpUpValue').value = savedBumpUpValue;
           }
