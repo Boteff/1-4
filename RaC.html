@@ -2,21 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>RGB Random Color Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Random Color Generator</title>
   <style>
     body {
-      background-color: black;
-      color: white;
-      text-align: center;
-      font-family: 'Courier New', monospace;
+      background-color: #121212;
+      color: #fff;
+      font-family: 'Arial', sans-serif;
       margin: 0;
       padding: 20px;
+      text-align: center;
     }
 
     h1 {
-      font-size: 28px;
-      font-weight: bold;
+      font-size: 24px;
       margin: 20px 0;
     }
 
@@ -24,12 +23,12 @@
       margin: 20px 0;
       display: flex;
       justify-content: center;
-      gap: 15px;
+      gap: 10px;
       flex-wrap: wrap;
     }
 
     .toggle-btn {
-      padding: 8px 12px;
+      padding: 10px;
       font-size: 16px;
       cursor: pointer;
       background-color: #333;
@@ -91,7 +90,7 @@
       gap: 15px;
       font-size: 18px;
       padding: 10px;
-      background-color: #111;
+      background-color: #1a1a1a;
       border-radius: 6px;
     }
 
@@ -109,27 +108,7 @@
       white-space: nowrap;
     }
 
-    .distance-control {
-      margin: 15px auto;
-      max-width: 500px;
-      text-align: center;
-      padding: 10px;
-      background-color: #1a1a1a;
-      border-radius: 6px;
-    }
-
-    .distance-control label {
-      font-size: 16px;
-      margin-right: 10px;
-    }
-
-    .distance-control input[type="range"] {
-      width: 60%;
-      margin: 0 10px;
-      accent-color: #007acc;
-    }
-
-    #remainingColors {
+    #pickedColors {
       margin-top: 30px;
       font-size: 18px;
       font-weight: bold;
@@ -153,14 +132,6 @@
     <label>colors</label>
   </div>
 
-  <!-- Minimum Distance Control -->
-  <div class="distance-control">
-    <label for="distanceSlider">Min Color Distance:</label>
-    <input type="range" id="distanceSlider" min="0" max="100" value="40">
-    <input type="number" id="distanceInput" min="0" max="100" value="40" style="width: 50px;">
-    <div><small>Higher = more visually distinct</small></div>
-  </div>
-
   <!-- Generate & Reset Buttons -->
   <button onclick="generateColors()">Generate Random Colors</button>
   <button onclick="confirmReset()">Reset All Colors</button>
@@ -168,24 +139,13 @@
   <!-- Color List -->
   <ul id="colorList"></ul>
 
-  <!-- Remaining Count -->
-  <p id="remainingColors">Remaining Colors: 16777216</p>
+  <!-- Picked Count -->
+  <p id="pickedColors">Picked Colors: 0</p>
 
   <script>
     // Persistent storage
     const totalColors = 16777216;
     let pickedColors = JSON.parse(localStorage.getItem('pickedColors')) || [];
-    
-    // Minimum distance control
-    const distanceSlider = document.getElementById('distanceSlider');
-    const distanceInput = document.getElementById('distanceInput');
-    
-    // Load saved distance or default to 40
-    let minDistance = parseInt(localStorage.getItem('minDistance')) || 40;
-    distanceSlider.value = minDistance;
-    distanceInput.value = minDistance;
-
-    let displayMode = 'HSB'; // Default
 
     // DOM Elements
     const hexBtn = document.getElementById('hexBtn');
@@ -193,19 +153,9 @@
     const hsbBtn = document.getElementById('hsbBtn');
     const countInput = document.getElementById('countInput');
     const colorList = document.getElementById('colorList');
-    const remainingEl = document.getElementById('remainingColors');
+    const pickedEl = document.getElementById('pickedColors');
 
-    // Sync slider and input
-    function updateDistance(value) {
-      const v = parseInt(value);
-      distanceSlider.value = v;
-      distanceInput.value = v;
-      minDistance = v;
-      localStorage.setItem('minDistance', v);
-    }
-
-    distanceSlider.addEventListener('input', () => updateDistance(distanceSlider.value));
-    distanceInput.addEventListener('change', () => updateDistance(distanceInput.value));
+    let displayMode = 'HSB'; // Default
 
     // Toggle buttons
     [hexBtn, rgbBtn, hsbBtn].forEach(btn => {
@@ -233,7 +183,6 @@
       const maxAttempts = count * 5000;
       let attempts = 0;
 
-      // Phase 1: Try to find visually distinct colors
       while (newColors.length < count && attempts < maxAttempts) {
         attempts++;
         const r = Math.floor(Math.random() * 256);
@@ -245,35 +194,7 @@
         const isUsed = pickedColors.some(c => c.hex === hex);
         if (isUsed) continue;
 
-        const tooSimilar = pickedColors.some(used => {
-          return hsbDistance(hsb, used.hsb) < minDistance;
-        });
-
-        if (tooSimilar) continue;
-
         newColors.push({ r, g, b, hex, hsb });
-      }
-
-      // Phase 2: Fallback — pick any unique color if needed
-      if (newColors.length < count) {
-        let fallbackCount = count - newColors.length;
-        attempts = 0;
-        const maxFallback = fallbackCount * 1000;
-
-        while (fallbackCount > 0 && attempts < maxFallback) {
-          attempts++;
-          const r = Math.floor(Math.random() * 256);
-          const g = Math.floor(Math.random() * 256);
-          const b = Math.floor(Math.random() * 256);
-          const hex = rgbToHex(r, g, b);
-
-          const isUsed = pickedColors.some(c => c.hex === hex);
-          if (isUsed) continue;
-
-          const hsb = rgbToHSB(r, g, b);
-          newColors.push({ r, g, b, hex, hsb });
-          fallbackCount--;
-        }
       }
 
       if (newColors.length === 0) {
@@ -287,7 +208,7 @@
 
       // Update UI
       updateColorList(newColors);
-      updateRemaining();
+      updatePicked();
     }
 
     function updateColorList(colors) {
@@ -321,18 +242,13 @@
 
     function resetColors() {
       localStorage.removeItem('pickedColors');
-      localStorage.removeItem('minDistance'); // Optional: reset distance too
       pickedColors = [];
-      minDistance = 40;
-      distanceSlider.value = 40;
-      distanceInput.value = 40;
       colorList.innerHTML = '';
-      updateRemaining();
+      updatePicked();
     }
 
-    function updateRemaining() {
-      const remaining = totalColors - pickedColors.length;
-      remainingEl.innerText = `Remaining Colors: ${remaining}`;
+    function updatePicked() {
+      pickedEl.innerText = `Picked Colors: ${pickedColors.length}`;
     }
 
     function rgbToHex(r, g, b) {
@@ -368,18 +284,8 @@
       };
     }
 
-    function hsbDistance(hsb1, hsb2) {
-      const dh = Math.min(
-        Math.abs(hsb1.h - hsb2.h),
-        360 - Math.abs(hsb1.h - hsb2.h)
-      );
-      const ds = Math.abs(hsb1.s - hsb2.s);
-      const db = Math.abs(hsb1.b - hsb2.b);
-      return Math.sqrt(dh * dh + ds * ds + db * db);
-    }
-
     // Initialize
-    updateRemaining();
+    updatePicked();
   </script>
 </body>
 </html>
