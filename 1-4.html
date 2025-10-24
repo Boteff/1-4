@@ -1,39 +1,91 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Random Number</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DeviantArt Link Builder</title>
   <style>
-    body {
-      margin: 0;
-      background-color: black;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      font-family: Arial, sans-serif;
-    }
-    #random-number {
-      font-size: 22vw; /* Very large, scales on screen width */
-      color: #90DDB4;
-      user-select: none;
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .field { margin: 15px 0; }
+    button { margin-left: 10px; }
+    #output { 
+      margin: 20px 0; 
+      padding: 10px; 
+      background: #f0f0f0; 
+      cursor: pointer; 
+      user-select: none; 
     }
   </style>
 </head>
 <body>
-  <div id="random-number">Waiting...</div>
+  <h2>DeviantArt MoreLikeThis Link Builder</h2>
+
+  <div class="field">
+    <input type="text" id="input1" placeholder="Enter deviation ID">
+    <button onclick="pasteText('input1')">Paste</button>
+  </div>
+
+  <div class="field">
+    <input type="text" id="input2" placeholder="Enter cursor value" disabled>
+    <button onclick="pasteText('input2')">Paste</button>
+  </div>
+
+  <div id="output">https://www.deviantart.com/morelikethis/</div>
 
   <script>
-    function generateRandomNumber() {
-      const number = Math.floor(Math.random() * 5) + 1; // 1 to 5
-      document.getElementById('random-number').textContent = number;
+    const base = "https://www.deviantart.com/morelikethis/";
+    const input1 = document.getElementById('input1');
+    const input2 = document.getElementById('input2');
+    const output = document.getElementById('output');
+
+    // Load saved data
+    window.onload = () => {
+      input1.value = localStorage.getItem('input1') || '';
+      input2.value = localStorage.getItem('input2') || '';
+      updateOutput();
+      updateInput2State();
+    };
+
+    // Save and update on input
+    input1.oninput = () => {
+      localStorage.setItem('input1', input1.value);
+      updateOutput();
+      updateInput2State();
+    };
+
+    input2.oninput = () => {
+      localStorage.setItem('input2', input2.value);
+      updateOutput();
+    };
+
+    function updateOutput() {
+      let url = base + input1.value;
+      if (input1.value && input2.value) {
+        url += "?cursor=" + input2.value;
+      }
+      output.textContent = url;
     }
 
-    // Generate immediately
-    generateRandomNumber();
+    function updateInput2State() {
+      input2.disabled = !input1.value;
+      if (!input1.value) input2.value = '';
+    }
 
-    // Then every 60 seconds (60000 milliseconds)
-    setInterval(generateRandomNumber, 15000);
+    async function pasteText(fieldId) {
+      const field = document.getElementById(fieldId);
+      try {
+        const text = await navigator.clipboard.readText();
+        field.value = ''; // Clear first
+        field.value = text;
+        field.oninput(); // Trigger update
+      } catch (err) {
+        alert('Paste failed. Allow clipboard permissions.');
+      }
+    }
+
+    output.onclick = () => {
+      navigator.clipboard.writeText(output.textContent);
+      output.style.background = '#ddd';
+      setTimeout(() => { output.style.background = '#f0f0f0'; }, 200);
+    };
   </script>
 </body>
 </html>
