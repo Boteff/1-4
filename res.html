@@ -1,3 +1,4 @@
+html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -71,6 +72,12 @@
       height: 150px;
       resize: vertical;
       font-size: 14px;
+    }
+    .scaler-input {
+      width: 60px;
+      padding: 5px;
+      font-size: 16px;
+      text-align: center;
     }
   </style>
 </head>
@@ -161,6 +168,16 @@
         <strong>Aspect Ratio:</strong>
         <span id="manualAspectRatio"></span>
       </div>
+
+      <div class="row input-group">
+        <strong>Resolution:</strong>
+        <span id="manualResolution"></span>
+      </div>
+
+      <div class="row input-group">
+        <strong>Scaler:</strong>
+        <input type="number" id="scalerInput" class="scaler-input" value="1" oninput="applyScaler()">
+      </div>
     </div>
   </div>
 
@@ -222,8 +239,10 @@
         let divisor = gcd(manualWidth, manualHeight);
         let ratioText = (manualWidth / divisor) + ":" + (manualHeight / divisor);
         document.getElementById('manualAspectRatio').innerText = ratioText;
+        document.getElementById('manualResolution').innerText = manualWidth + "x" + manualHeight;
       } else {
         document.getElementById('manualAspectRatio').innerText = '';
+        document.getElementById('manualResolution').innerText = '';
       }
       saveState();
     }
@@ -329,6 +348,16 @@
     const debouncedUpdateRatio = debounce(updateRatio, 200);
     const debouncedCalculateManualAspectRatio = debounce(calculateManualAspectRatio, 200);
     const debouncedCalculateResolution = debounce(calculateResolution, 200);
+
+    function applyScaler() {
+      const scaler = parseFloat(document.getElementById('scalerInput').value);
+      const manualWidth = parseInt(document.getElementById('manualWidth').value);
+      const manualHeight = parseInt(document.getElementById('manualHeight').value);
+      const newWidth = Math.round(manualWidth * scaler);
+      const newHeight = Math.round(manualHeight * scaler);
+      document.getElementById('manualResolution').innerText = newWidth + "x" + newHeight;
+      saveState();
+    }
 
     loadState();
     updateRatio('R');
