@@ -1,6 +1,5 @@
-html
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -90,9 +89,9 @@ html
 
       <div class="row input-group">
         <strong>Width:</strong>
-        <button onclick="adjustWidth('R', -32)">-</button>
+        <button onclick="adjustWidth('R', -16)">-</button>
         <input type="number" id="widthR" value="256" oninput="debouncedUpdateRatio('R')" min="8" max="9999">
-        <button onclick="adjustWidth('R', 32)">+</button>
+        <button onclick="adjustWidth('R', 16)">+</button>
       </div>
 
       <div class="row input-group">
