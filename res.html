@@ -87,15 +87,15 @@
 
       <div class="row input-group">
         <strong>Width:</strong>
-        <button onclick="adjustWidth('R', -64)">-</button>
+        <button onclick="adjustWidth('R', -16)">-</button>
         <input type="number" id="widthR" value="256" oninput="debouncedUpdateRatio('R')" min="16" max="9999">
-        <button onclick="adjustWidth('R', 64)">+</button>
+        <button onclick="adjustWidth('R', 16)">+</button>
       </div>
 
       <div class="row input-group">
         <strong>Height:</strong>
         <button onclick="adjustHeight('R', -8)">-</button>
-        <input type="number" id="heightR" value="256" oninput="debouncedUpdateRatio('R')" min="16" max="9999">
+        <input type="number" id="heightR" value="256" oninput="debouncedUpdateRatio('R')" min="8" max="9999">
         <button onclick="adjustHeight('R', 8)">+</button>
       </div>
 
