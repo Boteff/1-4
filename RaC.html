@@ -1,291 +1,229 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Random Color Generator</title>
-  <style>
-    body {
-      background-color: #121212;
-      color: #fff;
-      font-family: 'Arial', sans-serif;
-      margin: 0;
-      padding: 20px;
-      text-align: center;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Random Color Generator</title>
 
-    h1 {
-      font-size: 24px;
-      margin: 20px 0;
-    }
+<style>
+body {
+  background:#121212;
+  color:#fff;
+  font-family:Arial, sans-serif;
+  text-align:center;
+  padding:20px;
+}
 
-    .controls {
-      margin: 20px 0;
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
+.controls, .input-group {
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin:15px 0;
+}
 
-    .toggle-btn {
-      padding: 10px;
-      font-size: 16px;
-      cursor: pointer;
-      background-color: #333;
-      color: white;
-      border: 1px solid #555;
-      border-radius: 4px;
-    }
+.toggle-btn {
+  padding:8px 12px;
+  background:#333;
+  color:white;
+  border:1px solid #555;
+  cursor:pointer;
+  border-radius:4px;
+}
+.toggle-btn.active { background:#007acc; }
 
-    .toggle-btn.active {
-      background-color: #007acc;
-      font-weight: bold;
-    }
+input, select {
+  background:#333;
+  color:white;
+  border:1px solid #555;
+  border-radius:4px;
+  padding:6px;
+  width:70px;
+}
 
-    .input-group {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
-      margin: 15px 0;
-    }
+button {
+  padding:10px 20px;
+  background:#007acc;
+  color:white;
+  border:none;
+  border-radius:4px;
+  cursor:pointer;
+}
+button:hover { background:#005a99; }
 
-    input[type="number"] {
-      width: 60px;
-      padding: 8px;
-      font-size: 16px;
-      background-color: #333;
-      color: white;
-      border: 1px solid #555;
-      border-radius: 4px;
-    }
-
-    button {
-      padding: 10px 20px;
-      font-size: 18px;
-      cursor: pointer;
-      background-color: #007acc;
-      color: white;
-      border: none;
-      border-radius: 4px;
-    }
-
-    button:hover {
-      background-color: #005a99;
-    }
-
-    #colorList {
-      list-style: none;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      max-width: 600px;
-      margin: 20px auto;
-    }
-
-    .color-item {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      font-size: 18px;
-      padding: 10px;
-      background-color: #1a1a1a;
-      border-radius: 6px;
-    }
-
-    .color-swatch {
-      width: 40px;
-      height: 40px;
-      border: 1px solid #444;
-      border-radius: 4px;
-    }
-
-    .color-value {
-      font-family: monospace;
-      font-weight: bold;
-      color: white;
-      white-space: nowrap;
-    }
-
-    #pickedColors {
-      margin-top: 30px;
-      font-size: 18px;
-      font-weight: bold;
-    }
-  </style>
+#colorList {
+  max-width:600px;
+  margin:20px auto;
+  list-style:none;
+  padding:0;
+}
+.color-item {
+  display:flex;
+  align-items:center;
+  gap:15px;
+  background:#1a1a1a;
+  padding:10px;
+  border-radius:6px;
+}
+.color-swatch {
+  width:40px;
+  height:40px;
+  border:1px solid #444;
+}
+.color-value {
+  font-family:monospace;
+  font-weight:bold;
+}
+.hsb-row {
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  margin:5px 0;
+}
+</style>
 </head>
+
 <body>
-  <h1>Random Color Generator</h1>
 
-  <!-- Toggle Buttons -->
-  <div class="controls">
-    <button id="hexBtn" class="toggle-btn">HEX</button>
-    <button id="rgbBtn" class="toggle-btn">RGB</button>
-    <button id="hsbBtn" class="toggle-btn active">HSB</button>
+<h1>Random Color Generator</h1>
+
+<div class="controls">
+  <button id="hexBtn" class="toggle-btn">HEX</button>
+  <button id="rgbBtn" class="toggle-btn">RGB</button>
+  <button id="hsbBtn" class="toggle-btn active">HSB</button>
+</div>
+
+<div class="input-group">
+  Generate
+  <input type="number" id="countInput" value="1" min="1" max="100">
+  colors
+</div>
+
+<!-- HSB CONTROLS -->
+<div id="hsbControls">
+
+  <div class="hsb-row">
+    H
+    <select id="hMode">
+      <option value="any">Any</option>
+      <option value="range">Range</option>
+      <option value="lock">Lock</option>
+    </select>
+    <input id="hMin" placeholder="min">
+    <input id="hMax" placeholder="max">
   </div>
 
-  <!-- Number Input -->
-  <div class="input-group">
-    <label for="countInput">Generate:</label>
-    <input type="number" id="countInput" min="1" max="100" value="1">
-    <label>colors</label>
+  <div class="hsb-row">
+    S
+    <select id="sMode">
+      <option value="any">Any</option>
+      <option value="range">Range</option>
+      <option value="lock">Lock</option>
+    </select>
+    <input id="sMin" placeholder="min">
+    <input id="sMax" placeholder="max">
   </div>
 
-  <!-- Generate & Reset Buttons -->
-  <button onclick="generateColors()">Generate Random Colors</button>
-  <button onclick="confirmReset()">Reset All Colors</button>
+  <div class="hsb-row">
+    B
+    <select id="bMode">
+      <option value="any">Any</option>
+      <option value="range">Range</option>
+      <option value="lock">Lock</option>
+    </select>
+    <input id="bMin" placeholder="min">
+    <input id="bMax" placeholder="max">
+  </div>
 
-  <!-- Color List -->
-  <ul id="colorList"></ul>
+</div>
 
-  <!-- Picked Count -->
-  <p id="pickedColors">Picked Colors: 0</p>
+<button onclick="generateColors()">Generate</button>
+<button onclick="resetColors()">Reset</button>
 
-  <script>
-    // Persistent storage
-    const totalColors = 16777216;
-    let pickedColors = JSON.parse(localStorage.getItem('pickedColors')) || [];
+<ul id="colorList"></ul>
+<p id="pickedColors">Picked Colors: 0</p>
 
-    // DOM Elements
-    const hexBtn = document.getElementById('hexBtn');
-    const rgbBtn = document.getElementById('rgbBtn');
-    const hsbBtn = document.getElementById('hsbBtn');
-    const countInput = document.getElementById('countInput');
-    const colorList = document.getElementById('colorList');
-    const pickedEl = document.getElementById('pickedColors');
+<script>
+const hexBtn = document.getElementById('hexBtn');
+const rgbBtn = document.getElementById('rgbBtn');
+const hsbBtn = document.getElementById('hsbBtn');
+const colorList = document.getElementById('colorList');
+const pickedEl = document.getElementById('pickedColors');
+let displayMode = 'HSB';
+let pickedColors = [];
 
-    let displayMode = 'HSB'; // Default
+[hexBtn, rgbBtn, hsbBtn].forEach(btn=>{
+  btn.onclick=()=>{
+    [hexBtn,rgbBtn,hsbBtn].forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    displayMode = btn.id === 'hexBtn' ? 'HEX' : btn.id === 'rgbBtn' ? 'RGB' : 'HSB';
+  };
+});
 
-    // Toggle buttons
-    [hexBtn, rgbBtn, hsbBtn].forEach(btn => {
-      btn.addEventListener('click', function () {
-        [hexBtn, rgbBtn, hsbBtn].forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        displayMode = this.id === 'hexBtn' ? 'HEX' :
-                      this.id === 'rgbBtn' ? 'RGB' : 'HSB';
-      });
-    });
+function getValue(mode,min,max,maxLimit){
+  if(mode==='any') return rand(0,maxLimit);
+  if(mode==='lock') return clamp(Number(min),0,maxLimit);
+  return rand(Number(min),Number(max));
+}
 
-    function generateColors() {
-      const count = parseInt(countInput.value) || 1;
-      if (count < 1 || count > 100) {
-        alert("Please enter a number between 1 and 100.");
-        return;
-      }
+function generateColors(){
+  colorList.innerHTML='';
+  const count = Number(document.getElementById('countInput').value)||1;
 
-      if (pickedColors.length >= totalColors) {
-        alert("All possible colors have been used!");
-        return;
-      }
+  for(let i=0;i<count;i++){
+    let h = getValue(hMode.value,hMin.value,hMax.value,360);
+    let s = getValue(sMode.value,sMin.value,sMax.value,100);
+    let b = getValue(bMode.value,bMin.value,bMax.value,100);
 
-      const newColors = [];
-      const maxAttempts = count * 5000;
-      let attempts = 0;
+    let rgb = hsbToRgb(h,s,b);
+    let hex = rgbToHex(rgb.r,rgb.g,rgb.b);
 
-      while (newColors.length < count && attempts < maxAttempts) {
-        attempts++;
-        const r = Math.floor(Math.random() * 256);
-        const g = Math.floor(Math.random() * 256);
-        const b = Math.floor(Math.random() * 256);
-        const hex = rgbToHex(r, g, b);
-        const hsb = rgbToHSB(r, g, b);
+    let text = displayMode==='HEX'?hex:
+               displayMode==='RGB'?`RGB(${rgb.r},${rgb.g},${rgb.b})`:
+               `HSB(${h}°,${s}%,${b}%)`;
 
-        const isUsed = pickedColors.some(c => c.hex === hex);
-        if (isUsed) continue;
+    colorList.innerHTML+=`
+      <li class="color-item">
+        <div class="color-swatch" style="background:${hex}"></div>
+        <span class="color-value">${text}</span>
+      </li>`;
+    pickedColors.push(hex);
+  }
+  pickedEl.textContent=`Picked Colors: ${pickedColors.length}`;
+}
 
-        newColors.push({ r, g, b, hex, hsb });
-      }
+function resetColors(){
+  pickedColors=[];
+  colorList.innerHTML='';
+  pickedEl.textContent='Picked Colors: 0';
+}
 
-      if (newColors.length === 0) {
-        alert("Could not generate any new colors.");
-        return;
-      }
+function rand(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+function clamp(v,min,max){return Math.min(max,Math.max(min,v));}
 
-      // Save
-      pickedColors.push(...newColors);
-      localStorage.setItem('pickedColors', JSON.stringify(pickedColors));
+function rgbToHex(r,g,b){
+  return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase();
+}
 
-      // Update UI
-      updateColorList(newColors);
-      updatePicked();
-    }
+function hsbToRgb(h,s,b){
+  s/=100; b/=100;
+  let c=b*s;
+  let x=c*(1-Math.abs((h/60)%2-1));
+  let m=b-c;
+  let [r,g,l]=
+    h<60?[c,x,0]:
+    h<120?[x,c,0]:
+    h<180?[0,c,x]:
+    h<240?[0,x,c]:
+    h<300?[x,0,c]:
+    [c,0,x];
+  return {
+    r:Math.round((r+m)*255),
+    g:Math.round((g+m)*255),
+    b:Math.round((l+m)*255)
+  };
+}
+</script>
 
-    function updateColorList(colors) {
-      colorList.innerHTML = '';
-      colors.forEach(color => {
-        const li = document.createElement('li');
-        li.className = 'color-item';
-
-        let text;
-        if (displayMode === 'HEX') {
-          text = color.hex;
-        } else if (displayMode === 'RGB') {
-          text = `RGB(${color.r}, ${color.g}, ${color.b})`;
-        } else {
-          text = `HSB(${color.hsb.h}°, ${color.hsb.s}%, ${color.hsb.b}%)`;
-        }
-
-        li.innerHTML = `
-          <div class="color-swatch" style="background-color: ${color.hex};"></div>
-          <span class="color-value">${text}</span>
-        `;
-        colorList.appendChild(li);
-      });
-    }
-
-    function confirmReset() {
-      if (confirm("Are you sure you want to reset all picked colors? This cannot be undone.")) {
-        resetColors();
-      }
-    }
-
-    function resetColors() {
-      localStorage.removeItem('pickedColors');
-      pickedColors = [];
-      colorList.innerHTML = '';
-      updatePicked();
-    }
-
-    function updatePicked() {
-      pickedEl.innerText = `Picked Colors: ${pickedColors.length}`;
-    }
-
-    function rgbToHex(r, g, b) {
-      return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('').toUpperCase();
-    }
-
-    function rgbToHSB(r, g, b) {
-      let rPercent = r / 255, gPercent = g / 255, bPercent = b / 255;
-      let max = Math.max(rPercent, gPercent, bPercent);
-      let min = Math.min(rPercent, gPercent, bPercent);
-      let delta = max - min;
-
-      let h = 0;
-      if (delta !== 0) {
-        if (max === rPercent) {
-          h = ((gPercent - bPercent) / delta) % 6;
-        } else if (max === gPercent) {
-          h = (bPercent - rPercent) / delta + 2;
-        } else {
-          h = (rPercent - gPercent) / delta + 4;
-        }
-        h = Math.round(h * 60);
-        if (h < 0) h += 360;
-      }
-
-      let s = max === 0 ? 0 : (delta / max) * 100;
-      let bValue = max * 100;
-
-      return {
-        h: Math.round(h),
-        s: Math.round(s),
-        b: Math.round(bValue)
-      };
-    }
-
-    // Initialize
-    updatePicked();
-  </script>
 </body>
 </html>
