@@ -13,7 +13,6 @@ body {
   text-align:center;
   padding:20px;
 }
-
 .controls, .input-group {
   display:flex;
   justify-content:center;
@@ -21,7 +20,6 @@ body {
   flex-wrap:wrap;
   margin:15px 0;
 }
-
 .toggle-btn {
   padding:8px 12px;
   background:#333;
@@ -31,7 +29,6 @@ body {
   border-radius:4px;
 }
 .toggle-btn.active { background:#007acc; }
-
 input, select {
   background:#333;
   color:white;
@@ -40,7 +37,6 @@ input, select {
   padding:6px;
   width:70px;
 }
-
 button {
   padding:10px 20px;
   background:#007acc;
@@ -50,7 +46,6 @@ button {
   cursor:pointer;
 }
 button:hover { background:#005a99; }
-
 #colorList {
   max-width:600px;
   margin:20px auto;
@@ -90,7 +85,7 @@ button:hover { background:#005a99; }
 <div class="controls">
   <button id="hexBtn" class="toggle-btn">HEX</button>
   <button id="rgbBtn" class="toggle-btn">RGB</button>
-  <button id="hsbBtn" class="toggle-btn active">HSB</button>
+  <button id="hsbBtn" class="toggle-btn">HSB</button>
 </div>
 
 <div class="input-group">
@@ -99,130 +94,130 @@ button:hover { background:#005a99; }
   colors
 </div>
 
-<!-- HSB CONTROLS -->
 <div id="hsbControls">
-
   <div class="hsb-row">
     H
-    <select id="hMode">
-      <option value="any">Any</option>
-      <option value="range">Range</option>
-      <option value="lock">Lock</option>
-    </select>
+    <select id="hMode"><option>any</option><option>range</option><option>lock</option></select>
     <input id="hMin" placeholder="min">
     <input id="hMax" placeholder="max">
   </div>
-
   <div class="hsb-row">
     S
-    <select id="sMode">
-      <option value="any">Any</option>
-      <option value="range">Range</option>
-      <option value="lock">Lock</option>
-    </select>
+    <select id="sMode"><option>any</option><option>range</option><option>lock</option></select>
     <input id="sMin" placeholder="min">
     <input id="sMax" placeholder="max">
   </div>
-
   <div class="hsb-row">
     B
-    <select id="bMode">
-      <option value="any">Any</option>
-      <option value="range">Range</option>
-      <option value="lock">Lock</option>
-    </select>
+    <select id="bMode"><option>any</option><option>range</option><option>lock</option></select>
     <input id="bMin" placeholder="min">
     <input id="bMax" placeholder="max">
   </div>
-
 </div>
 
 <button onclick="generateColors()">Generate</button>
-<button onclick="resetColors()">Reset</button>
+<button onclick="resetAll()">Reset</button>
 
 <ul id="colorList"></ul>
 <p id="pickedColors">Picked Colors: 0</p>
 
 <script>
-const hexBtn = document.getElementById('hexBtn');
-const rgbBtn = document.getElementById('rgbBtn');
-const hsbBtn = document.getElementById('hsbBtn');
-const colorList = document.getElementById('colorList');
-const pickedEl = document.getElementById('pickedColors');
-let displayMode = 'HSB';
-let pickedColors = [];
+const storageKey = 'colorGeneratorState';
 
-[hexBtn, rgbBtn, hsbBtn].forEach(btn=>{
-  btn.onclick=()=>{
-    [hexBtn,rgbBtn,hsbBtn].forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    displayMode = btn.id === 'hexBtn' ? 'HEX' : btn.id === 'rgbBtn' ? 'RGB' : 'HSB';
-  };
+let state = JSON.parse(localStorage.getItem(storageKey)) || {
+  displayMode:'HSB',
+  count:1,
+  picked:[],
+  h:{mode:'any',min:'',max:''},
+  s:{mode:'any',min:'',max:''},
+  b:{mode:'any',min:'',max:''}
+};
+
+function saveState(){
+  localStorage.setItem(storageKey, JSON.stringify(state));
+}
+
+function loadState(){
+  setMode(state.displayMode);
+  countInput.value = state.count;
+
+  hMode.value=state.h.mode; hMin.value=state.h.min; hMax.value=state.h.max;
+  sMode.value=state.s.mode; sMin.value=state.s.min; sMax.value=state.s.max;
+  bMode.value=state.b.mode; bMin.value=state.b.min; bMax.value=state.b.max;
+
+  redrawColors();
+}
+
+function setMode(mode){
+  state.displayMode=mode;
+  [hexBtn,rgbBtn,hsbBtn].forEach(b=>b.classList.remove('active'));
+  document.getElementById(mode.toLowerCase()+'Btn').classList.add('active');
+  saveState();
+}
+
+[hexBtn,rgbBtn,hsbBtn].forEach(btn=>{
+  btn.onclick=()=>setMode(btn.id.replace('Btn','').toUpperCase());
 });
 
 function getValue(mode,min,max,maxLimit){
   if(mode==='any') return rand(0,maxLimit);
-  if(mode==='lock') return clamp(Number(min),0,maxLimit);
-  return rand(Number(min),Number(max));
+  if(mode==='lock') return clamp(+min,0,maxLimit);
+  return rand(+min,+max);
 }
 
 function generateColors(){
+  state.count=+countInput.value||1;
+  for(let i=0;i<state.count;i++){
+    let h=getValue(hMode.value,hMin.value,hMax.value,360);
+    let s=getValue(sMode.value,sMin.value,sMax.value,100);
+    let b=getValue(bMode.value,bMin.value,bMax.value,100);
+    let rgb=hsbToRgb(h,s,b);
+    state.picked.push({h,s,b,rgb});
+  }
+  syncInputs();
+  redrawColors();
+  saveState();
+}
+
+function redrawColors(){
   colorList.innerHTML='';
-  const count = Number(document.getElementById('countInput').value)||1;
-
-  for(let i=0;i<count;i++){
-    let h = getValue(hMode.value,hMin.value,hMax.value,360);
-    let s = getValue(sMode.value,sMin.value,sMax.value,100);
-    let b = getValue(bMode.value,bMin.value,bMax.value,100);
-
-    let rgb = hsbToRgb(h,s,b);
-    let hex = rgbToHex(rgb.r,rgb.g,rgb.b);
-
-    let text = displayMode==='HEX'?hex:
-               displayMode==='RGB'?`RGB(${rgb.r},${rgb.g},${rgb.b})`:
-               `HSB(${h}°,${s}%,${b}%)`;
-
+  state.picked.forEach(c=>{
+    let hex=rgbToHex(c.rgb.r,c.rgb.g,c.rgb.b);
+    let text=state.displayMode==='HEX'?hex:
+             state.displayMode==='RGB'?`RGB(${c.rgb.r},${c.rgb.g},${c.rgb.b})`:
+             `HSB(${c.h}°,${c.s}%,${c.b}%)`;
     colorList.innerHTML+=`
       <li class="color-item">
         <div class="color-swatch" style="background:${hex}"></div>
         <span class="color-value">${text}</span>
       </li>`;
-    pickedColors.push(hex);
-  }
-  pickedEl.textContent=`Picked Colors: ${pickedColors.length}`;
+  });
+  pickedColors.textContent=`Picked Colors: ${state.picked.length}`;
 }
 
-function resetColors(){
-  pickedColors=[];
-  colorList.innerHTML='';
-  pickedEl.textContent='Picked Colors: 0';
+function syncInputs(){
+  state.h={mode:hMode.value,min:hMin.value,max:hMax.value};
+  state.s={mode:sMode.value,min:sMin.value,max:sMax.value};
+  state.b={mode:bMode.value,min:bMin.value,max:bMax.value};
+}
+
+function resetAll(){
+  if(!confirm('Reset everything?')) return;
+  localStorage.removeItem(storageKey);
+  location.reload();
 }
 
 function rand(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
 function clamp(v,min,max){return Math.min(max,Math.max(min,v));}
-
-function rgbToHex(r,g,b){
-  return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase();
-}
-
+function rgbToHex(r,g,b){return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase();}
 function hsbToRgb(h,s,b){
   s/=100; b/=100;
-  let c=b*s;
-  let x=c*(1-Math.abs((h/60)%2-1));
-  let m=b-c;
-  let [r,g,l]=
-    h<60?[c,x,0]:
-    h<120?[x,c,0]:
-    h<180?[0,c,x]:
-    h<240?[0,x,c]:
-    h<300?[x,0,c]:
-    [c,0,x];
-  return {
-    r:Math.round((r+m)*255),
-    g:Math.round((g+m)*255),
-    b:Math.round((l+m)*255)
-  };
+  let c=b*s,x=c*(1-Math.abs((h/60)%2-1)),m=b-c;
+  let [r,g,l]=h<60?[c,x,0]:h<120?[x,c,0]:h<180?[0,c,x]:h<240?[0,x,c]:h<300?[x,0,c]:[c,0,x];
+  return {r:Math.round((r+m)*255),g:Math.round((g+m)*255),b:Math.round((l+m)*255)};
 }
+
+loadState();
 </script>
 
 </body>
