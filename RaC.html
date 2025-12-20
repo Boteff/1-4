@@ -87,7 +87,7 @@ input{
 
 <div class="controls">
   <button id="rgbBtn" class="toggle-btn">RGB</button>
-  <button id="hsbBtn" class="toggle-btn active">HSB</button>
+  <button id="hsbBtn" class="toggle-btn">HSB</button>
 </div>
 
 <div class="input-group">
@@ -104,7 +104,7 @@ input{
 
 <div class="controls">
   <button onclick="generateColors()">Generate</button>
-  <button onclick="shuffleVisible()">Shuffle Visible</button>
+  <button id="shuffleToggle" class="toggle-btn">Shuffle OFF</button>
   <button onclick="resetAll()">Reset</button>
 </div>
 
@@ -114,45 +114,59 @@ input{
 <script>
 /* ========= STATE ========= */
 let state = JSON.parse(localStorage.getItem('colorState')) || {
-  displayMode:'HSB',
-  lifetimeCount:0,
-  currentBatch:[],
-  hsbInputs:{h:'',s:'',b:''}
+  displayMode: 'HSB',
+  lifetimeCount: 0,
+  currentBatch: [],
+  shuffleOn: false,
+  hsbInputs: { h:'', s:'', b:'' }
 };
 
 const els = {
-  list:document.getElementById('colorList'),
-  picked:document.getElementById('pickedColors'),
-  rgbBtn:document.getElementById('rgbBtn'),
-  hsbBtn:document.getElementById('hsbBtn'),
-  count:document.getElementById('countInput'),
-  h:document.getElementById('hInput'),
-  s:document.getElementById('sInput'),
-  b:document.getElementById('bInput')
+  list: document.getElementById('colorList'),
+  picked: document.getElementById('pickedColors'),
+  rgbBtn: document.getElementById('rgbBtn'),
+  hsbBtn: document.getElementById('hsbBtn'),
+  shuffleBtn: document.getElementById('shuffleToggle'),
+  count: document.getElementById('countInput'),
+  h: document.getElementById('hInput'),
+  s: document.getElementById('sInput'),
+  b: document.getElementById('bInput')
 };
 
+/* ========= INIT UI ========= */
 els.h.value = state.hsbInputs.h;
 els.s.value = state.hsbInputs.s;
 els.b.value = state.hsbInputs.b;
 
-/* ========= SAVE ========= */
-function save(){localStorage.setItem('colorState',JSON.stringify(state));}
+[state.rgbBtn, state.hsbBtn];
 
-/* ========= TOGGLE ========= */
-[els.rgbBtn,els.hsbBtn].forEach(btn=>{
-  btn.onclick=()=>{
-    [els.rgbBtn,els.hsbBtn].forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    state.displayMode = btn===els.rgbBtn?'RGB':'HSB';
-    save(); redraw();
-  };
-});
-if(state.displayMode==='RGB') els.rgbBtn.classList.add('active');
+/* ========= SAVE ========= */
+function save(){
+  localStorage.setItem('colorState', JSON.stringify(state));
+}
+
+/* ========= TOGGLES ========= */
+function updateToggles(){
+  els.rgbBtn.classList.toggle('active', state.displayMode==='RGB');
+  els.hsbBtn.classList.toggle('active', state.displayMode==='HSB');
+  els.shuffleBtn.classList.toggle('active', state.shuffleOn);
+  els.shuffleBtn.textContent = state.shuffleOn ? 'Shuffle ON' : 'Shuffle OFF';
+}
+updateToggles();
+
+els.rgbBtn.onclick = () => { state.displayMode='RGB'; save(); redraw(); updateToggles(); };
+els.hsbBtn.onclick = () => { state.displayMode='HSB'; save(); redraw(); updateToggles(); };
+
+els.shuffleBtn.onclick = () => {
+  state.shuffleOn = !state.shuffleOn;
+  if(state.shuffleOn) shuffleVisible();
+  save(); updateToggles();
+};
 
 /* ========= INPUT PERSIST ========= */
-[['h','h'],['s','s'],['b','b']].forEach(([k,id])=>{
-  els[k].oninput=()=>{
-    state.hsbInputs[k]=els[k].value;
+['h','s','b'].forEach(k=>{
+  els[k].oninput = () => {
+    state.hsbInputs[k] = els[k].value;
     save();
   };
 });
@@ -163,41 +177,54 @@ function randInt(max){
   crypto.getRandomValues(a);
   return a[0]%max;
 }
-function randRange(min,max){return min+randInt(max-min+1);}
+function randRange(min,max){ return min + randInt(max-min+1); }
 
 /* ========= PARSE ========= */
 function parseInput(v,min,max){
-  if(!v||v==='0') return randRange(min,max);
+  if(!v || v==='0') return randRange(min,max);
   if(v.includes('-')){
-    let[a,b]=v.split('-').map(Number);
-    return randRange(Math.max(min,a),Math.min(max,b));
+    let [a,b] = v.split('-').map(Number);
+    return randRange(Math.max(min,a), Math.min(max,b));
   }
-  return Math.min(max,Math.max(min,Number(v)));
+  return Math.min(max, Math.max(min, Number(v)));
+}
+
+/* ========= SHUFFLE ========= */
+function shuffleVisible(){
+  let idx = state.currentBatch
+    .map((c,i)=>!c.hidden?i:null)
+    .filter(i=>i!==null);
+
+  let vis = idx.map(i=>state.currentBatch[i]);
+  for(let i=vis.length-1;i>0;i--){
+    let j = randInt(i+1);
+    [vis[i],vis[j]] = [vis[j],vis[i]];
+  }
+  idx.forEach((id,i)=>state.currentBatch[id]=vis[i]);
 }
 
 /* ========= GENERATE ========= */
 function generateColors(){
-  let n=parseInt(els.count.value)||1;
-  state.currentBatch=[];
+  let n = parseInt(els.count.value)||1;
+  state.currentBatch = [];
 
   for(let i=0;i<n;i++){
     let r,g,b,h,s,br;
     if(state.displayMode==='HSB'){
-      h=parseInput(els.h.value,0,360);
-      s=parseInput(els.s.value,0,100);
-      br=parseInput(els.b.value,0,100);
+      h = parseInput(els.h.value,0,360);
+      s = parseInput(els.s.value,0,100);
+      br = parseInput(els.b.value,0,100);
       ({r,g,b}=hsbToRGB(h,s,br));
     }else{
       r=randInt(256); g=randInt(256); b=randInt(256);
       ({h,s,b:br}=rgbToHSB(r,g,b));
     }
 
-    state.currentBatch.push({
-      rgb:{r,g,b}, h,s,b:br, hidden:false
-    });
+    state.currentBatch.push({ rgb:{r,g,b}, h,s,b:br, hidden:false });
     state.lifetimeCount++;
   }
 
+  if(state.shuffleOn) shuffleVisible();
   save(); redraw();
 }
 
@@ -206,34 +233,28 @@ function redraw(){
   els.list.innerHTML='';
   state.currentBatch.forEach((c,i)=>{
     if(c.hidden) return;
-    let hex=rgbToHex(c.rgb.r,c.rgb.g,c.rgb.b);
-    let txt=state.displayMode==='RGB'
-      ?`RGB(${c.rgb.r}, ${c.rgb.g}, ${c.rgb.b})`
-      :`HSB(${c.h}°, ${c.s}%, ${c.b}%)`;
-    els.list.innerHTML+=`
+    let hex = rgbToHex(c.rgb.r,c.rgb.g,c.rgb.b);
+    let txt = state.displayMode==='RGB'
+      ? `RGB(${c.rgb.r}, ${c.rgb.g}, ${c.rgb.b})`
+      : `HSB(${c.h}°, ${c.s}%, ${c.b}%)`;
+
+    els.list.innerHTML += `
       <li class="color-item" onclick="hideColor(${i})">
         <div class="color-swatch" style="background:${hex}"></div>
         <span class="color-value">${txt}<span class="hex">${hex}</span></span>
       </li>`;
   });
-  els.picked.textContent=`Total colors picked: ${state.lifetimeCount}`;
+
+  els.picked.textContent = `Total colors picked: ${state.lifetimeCount}`;
 }
 
 /* ========= ACTIONS ========= */
 function hideColor(i){
-  state.currentBatch[i].hidden=true;
+  state.currentBatch[i].hidden = true;
+  if(state.shuffleOn) shuffleVisible();
   save(); redraw();
 }
-function shuffleVisible(){
-  let idx=state.currentBatch.map((c,i)=>!c.hidden?i:null).filter(i=>i!==null);
-  let vis=idx.map(i=>state.currentBatch[i]);
-  for(let i=vis.length-1;i>0;i--){
-    let j=randInt(i+1);
-    [vis[i],vis[j]]=[vis[j],vis[i]];
-  }
-  idx.forEach((id,i)=>state.currentBatch[id]=vis[i]);
-  save(); redraw();
-}
+
 function resetAll(){
   if(confirm('This will wipe ALL saved data. Continue?')){
     localStorage.removeItem('colorState');
@@ -252,12 +273,12 @@ function rgbToHSB(r,g,b){
     if(m===r)h=((g-b)/d)%6;
     else if(m===g)h=(b-r)/d+2;
     else h=(r-g)/d+4;
-    h=Math.round(h*60);if(h<0)h+=360;
+    h=Math.round(h*60); if(h<0)h+=360;
   }
-  return{h,s:m?Math.round(d/m*100):0,b:Math.round(m*100)};
+  return { h, s:m?Math.round(d/m*100):0, b:Math.round(m*100) };
 }
 function hsbToRGB(h,s,b){
-  s/=100;b/=100;
+  s/=100; b/=100;
   let c=b*s,x=c*(1-Math.abs((h/60)%2-1)),m=b-c;
   let r=0,g=0,bl=0;
   if(h<60){r=c;g=x;}
@@ -266,13 +287,15 @@ function hsbToRGB(h,s,b){
   else if(h<240){g=x;bl=c;}
   else if(h<300){r=x;bl=c;}
   else{r=c;bl=x;}
-  return{
+  return {
     r:Math.round((r+m)*255),
     g:Math.round((g+m)*255),
     b:Math.round((bl+m)*255)
   };
 }
 
+/* INIT */
+updateToggles();
 redraw();
 </script>
 
