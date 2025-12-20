@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Random Color Generator</title>
+
 <style>
 body {
   background:#121212;
@@ -11,16 +12,71 @@ body {
   text-align:center;
   padding:20px;
 }
-.controls, .input-group {display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
-.toggle-btn {padding:8px 14px;background:#333;color:#fff;border:1px solid #555;border-radius:4px;cursor:pointer;}
-.toggle-btn.active {background:#007acc;font-weight:bold;}
-button {padding:10px 20px;font-size:16px;background:#007acc;color:white;border:none;border-radius:4px;cursor:pointer;}
-button:hover {background:#005a99;}
-input[type="number"]{width:70px;padding:6px;background:#333;color:#fff;border:1px solid #555;border-radius:4px;}
-#colorList{list-style:none;padding:0;max-width:700px;margin:20px auto;display:flex;flex-direction:column;gap:10px;}
-.color-item{display:flex;align-items:center;gap:15px;padding:10px;background:#1a1a1a;border-radius:6px;cursor:pointer;}
-.color-swatch{width:40px;height:40px;border-radius:4px;border:1px solid #444;}
-.color-value{font-family:monospace;font-weight:bold;}
+.controls,.input-group{
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin:10px 0;
+}
+.toggle-btn{
+  padding:8px 14px;
+  background:#333;
+  color:#fff;
+  border:1px solid #555;
+  border-radius:4px;
+  cursor:pointer;
+}
+.toggle-btn.active{
+  background:#007acc;
+  font-weight:bold;
+}
+button{
+  padding:10px 20px;
+  font-size:16px;
+  background:#007acc;
+  color:white;
+  border:none;
+  border-radius:4px;
+  cursor:pointer;
+}
+button:hover{background:#005a99}
+input{
+  width:80px;
+  padding:6px;
+  background:#333;
+  color:#fff;
+  border:1px solid #555;
+  border-radius:4px;
+}
+#colorList{
+  list-style:none;
+  padding:0;
+  max-width:700px;
+  margin:20px auto;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+.color-item{
+  display:flex;
+  align-items:center;
+  gap:15px;
+  padding:10px;
+  background:#1a1a1a;
+  border-radius:6px;
+  cursor:pointer;
+}
+.color-swatch{
+  width:40px;
+  height:40px;
+  border-radius:4px;
+  border:1px solid #444;
+}
+.color-value{
+  font-family:monospace;
+  font-weight:bold;
+}
 .hex{opacity:.7;margin-left:10px;}
 </style>
 </head>
@@ -40,6 +96,13 @@ input[type="number"]{width:70px;padding:6px;background:#333;color:#fff;border:1p
   <label>colors</label>
 </div>
 
+<!-- HSB EXTRAS -->
+<div id="hsbControls" class="controls">
+  <label>H</label><input id="hInput" placeholder="0 / x-y / x">
+  <label>S</label><input id="sInput" placeholder="0 / x-y / x">
+  <label>B</label><input id="bInput" placeholder="0 / x-y / x">
+</div>
+
 <div class="controls">
   <button onclick="generateColors()">Generate</button>
   <button onclick="shuffleVisible()">Shuffle Visible</button>
@@ -50,9 +113,7 @@ input[type="number"]{width:70px;padding:6px;background:#333;color:#fff;border:1p
 <p id="pickedColors"></p>
 
 <script>
-/* =======================
-   STATE & STORAGE
-======================= */
+/* ========= STATE ========= */
 let state = JSON.parse(localStorage.getItem('colorState')) || {
   displayMode:'HSB',
   picked:[]
@@ -63,15 +124,16 @@ const pickedEl = document.getElementById('pickedColors');
 const rgbBtn = document.getElementById('rgbBtn');
 const hsbBtn = document.getElementById('hsbBtn');
 const countInput = document.getElementById('countInput');
+const hInput = document.getElementById('hInput');
+const sInput = document.getElementById('sInput');
+const bInput = document.getElementById('bInput');
 
 function saveState(){
   localStorage.setItem('colorState', JSON.stringify(state));
 }
 
-/* =======================
-   TOGGLE
-======================= */
-[rgbBtn, hsbBtn].forEach(btn=>{
+/* ========= TOGGLE ========= */
+[rgbBtn,hsbBtn].forEach(btn=>{
   btn.onclick=()=>{
     [rgbBtn,hsbBtn].forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
@@ -82,33 +144,51 @@ function saveState(){
 });
 if(state.displayMode==='RGB') rgbBtn.classList.add('active');
 
-/* =======================
-   CRYPTO RANDOM
-======================= */
+/* ========= CRYPTO RANDOM ========= */
 function randInt(max){
-  const arr = new Uint32Array(1);
-  crypto.getRandomValues(arr);
-  return arr[0] % max;
+  const a=new Uint32Array(1);
+  crypto.getRandomValues(a);
+  return a[0]%max;
+}
+function randRange(min,max){
+  return min+randInt(max-min+1);
 }
 
-/* =======================
-   COLOR GENERATION
-======================= */
+/* ========= PARSE INPUT ========= */
+function parseInput(val,min,max){
+  if(!val||val==='0') return randRange(min,max);
+  if(val.includes('-')){
+    let [a,b]=val.split('-').map(Number);
+    return randRange(
+      Math.max(min,a),
+      Math.min(max,b)
+    );
+  }
+  return Math.min(max,Math.max(min,Number(val)));
+}
+
+/* ========= GENERATE ========= */
 function generateColors(){
-  let count = parseInt(countInput.value)||1;
+  let count=parseInt(countInput.value)||1;
 
   for(let i=0;i<count;i++){
-    let r = randInt(256);
-    let g = randInt(256);
-    let b = randInt(256);
+    let r,g,b,h,s,br;
 
-    let hsb = rgbToHSB(r,g,b);
+    if(state.displayMode==='HSB'){
+      h=parseInput(hInput.value,0,360);
+      s=parseInput(sInput.value,0,100);
+      br=parseInput(bInput.value,0,100);
+      ({r,g,b}=hsbToRGB(h,s,br));
+    }else{
+      r=randInt(256);
+      g=randInt(256);
+      b=randInt(256);
+      ({h,s,b:br}=rgbToHSB(r,g,b));
+    }
 
     state.picked.push({
       rgb:{r,g,b},
-      h:hsb.h,
-      s:hsb.s,
-      b:hsb.b,
+      h,s,b:br,
       hidden:false
     });
   }
@@ -117,53 +197,42 @@ function generateColors(){
   redrawColors();
 }
 
-/* =======================
-   RENDER
-======================= */
+/* ========= RENDER ========= */
 function redrawColors(){
   colorList.innerHTML='';
-
   state.picked.forEach((c,i)=>{
     if(c.hidden) return;
+    let hex=rgbToHex(c.rgb.r,c.rgb.g,c.rgb.b);
+    let text=state.displayMode==='RGB'
+      ?`RGB(${c.rgb.r}, ${c.rgb.g}, ${c.rgb.b})`
+      :`HSB(${c.h}°, ${c.s}%, ${c.b}%)`;
 
-    let hex = rgbToHex(c.rgb.r,c.rgb.g,c.rgb.b);
-    let text = state.displayMode==='RGB'
-      ? `RGB(${c.rgb.r}, ${c.rgb.g}, ${c.rgb.b})`
-      : `HSB(${c.h}°, ${c.s}%, ${c.b}%)`;
-
-    colorList.innerHTML += `
+    colorList.innerHTML+=`
       <li class="color-item" onclick="hideColor(${i})">
         <div class="color-swatch" style="background:${hex}"></div>
         <span class="color-value">${text}<span class="hex">${hex}</span></span>
       </li>`;
   });
-
-  pickedEl.textContent = `Picked Colors: ${state.picked.length}`;
+  pickedEl.textContent=`Picked Colors: ${state.picked.length}`;
 }
 
-/* =======================
-   ACTIONS
-======================= */
+/* ========= ACTIONS ========= */
 function hideColor(i){
-  state.picked[i].hidden = true;
+  state.picked[i].hidden=true;
   saveState();
   redrawColors();
 }
-
 function shuffleVisible(){
-  let idx = state.picked.map((c,i)=>!c.hidden?i:null).filter(i=>i!==null);
-  let vis = idx.map(i=>state.picked[i]);
-
+  let idx=state.picked.map((c,i)=>!c.hidden?i:null).filter(i=>i!==null);
+  let vis=idx.map(i=>state.picked[i]);
   for(let i=vis.length-1;i>0;i--){
-    let j = randInt(i+1);
+    let j=randInt(i+1);
     [vis[i],vis[j]]=[vis[j],vis[i]];
   }
-
   idx.forEach((id,i)=>state.picked[id]=vis[i]);
   saveState();
   redrawColors();
 }
-
 function confirmReset(){
   if(confirm('Reset everything?')){
     state={displayMode:'HSB',picked:[]};
@@ -172,31 +241,35 @@ function confirmReset(){
   }
 }
 
-/* =======================
-   COLOR CONVERSION
-======================= */
+/* ========= COLOR MATH ========= */
 function rgbToHex(r,g,b){
   return '#'+[r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase();
 }
-
 function rgbToHSB(r,g,b){
-  r/=255; g/=255; b/=255;
-  let max=Math.max(r,g,b), min=Math.min(r,g,b);
-  let d=max-min;
-  let h=0;
-
+  r/=255;g/=255;b/=255;
+  let max=Math.max(r,g,b),min=Math.min(r,g,b),d=max-min,h=0;
   if(d){
-    if(max===r) h=((g-b)/d)%6;
-    else if(max===g) h=(b-r)/d+2;
+    if(max===r)h=((g-b)/d)%6;
+    else if(max===g)h=(b-r)/d+2;
     else h=(r-g)/d+4;
-    h=Math.round(h*60);
-    if(h<0) h+=360;
+    h=Math.round(h*60);if(h<0)h+=360;
   }
-
-  return {
-    h,
-    s: max===0?0:Math.round((d/max)*100),
-    b: Math.round(max*100)
+  return {h,s:max?Math.round(d/max*100):0,b:Math.round(max*100)};
+}
+function hsbToRGB(h,s,b){
+  s/=100;b/=100;
+  let c=b*s,x=c*(1-Math.abs((h/60)%2-1)),m=b-c;
+  let r=0,g=0,bl=0;
+  if(h<60){r=c;g=x;}
+  else if(h<120){r=x;g=c;}
+  else if(h<180){g=c;bl=x;}
+  else if(h<240){g=x;bl=c;}
+  else if(h<300){r=x;bl=c;}
+  else{r=c;bl=x;}
+  return{
+    r:Math.round((r+m)*255),
+    g:Math.round((g+m)*255),
+    b:Math.round((bl+m)*255)
   };
 }
 
