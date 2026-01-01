@@ -111,9 +111,9 @@ button {
   </div>
 
   <div id="aspectButtons">
-    <button onclick="setAspectRatio(4,5)">4:5</button>
+    <button onclick="applyClickMultiplier(0.5)">1/2</button>
     <button class="ratioButton" id="ratioButtonR" onclick="resetHeight()">1:1</button>
-    <button onclick="setAspectRatio(2,3)">2:3</button>
+    <button onclick="applyClickMultiplier(0.75)">3/4</button>
   </div>
 </div>
 
@@ -125,7 +125,7 @@ button {
 
   <div class="row input-group">
     <strong>Aspect Ratio:</strong>
-    <input type="text" id="aspectRatio" placeholder="e.g., 16:9" oninput="debouncedCalculateResolution()">
+    <input type="text" id="aspectRatio" oninput="debouncedCalculateResolution()">
     <button onclick="copyRatio()">Copy Ratio</button>
   </div>
 
@@ -177,10 +177,10 @@ function adjustWidth(val) {
 
 /* Height */
 function adjustHeight(val) {
-  let w = parseInt(widthR.value);
+  const w = parseInt(widthR.value);
   let h = parseInt(heightR.value);
-  let min = w;
-  let max = w * 2;
+  const min = w;
+  const max = w * 2;
 
   h += val;
   if (h < min) h = min;
@@ -190,14 +190,22 @@ function adjustHeight(val) {
   updateRatio();
 }
 
-/* Aspect */
+/* Red button */
 function resetHeight() {
   heightR.value = widthR.value;
   updateRatio();
 }
 
-function setAspectRatio(w, h) {
-  heightR.value = Math.round(widthR.value * h / w);
+/* NEW: click multiplier (1/2, 3/4) */
+function applyClickMultiplier(multiplier) {
+  const w = parseInt(widthR.value);
+  const max = w * 2;
+  const h = parseInt(heightR.value);
+
+  const currentClicks = Math.floor((max - h) / 8);
+  const newClicks = Math.floor(currentClicks * multiplier);
+
+  heightR.value = max - (newClicks * 8);
   updateRatio();
 }
 
@@ -249,7 +257,6 @@ function copyRatio() {
   calculateResolution();
 }
 
-/* Bump */
 function adjustBump(v) {
   bumpUpValue.value = Math.max(0, parseInt(bumpUpValue.value) + v);
   saveState();
