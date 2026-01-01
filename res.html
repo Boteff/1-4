@@ -93,19 +93,21 @@ button {
 <div class="container">
 
 <!-- Resolution / Aspect Ratio -->
-<div class="calculator" id="calcR">
+<div class="calculator">
   <div class="calculator-title">Resolution / Aspect Ratio</div>
 
   <div class="row input-group">
     <strong>Width:</strong>
     <button onclick="adjustWidth(-8)">-</button>
-    <input type="number" id="widthR" value="256" oninput="debouncedUpdateRatio()">
+    <input type="number" id="widthR" value="256" oninput="updateRatio()">
     <button onclick="adjustWidth(8)">+</button>
   </div>
 
   <div class="row input-group">
     <strong>Height:</strong>
-    <input type="number" id="heightR" value="256" oninput="debouncedUpdateRatio()">
+    <button onclick="adjustHeight(-8)">-</button>
+    <input type="number" id="heightR" value="256" oninput="updateRatio()">
+    <button id="heightPlusBtn" onclick="adjustHeight(8)">+ (0)</button>
   </div>
 
   <div id="aspectButtons">
@@ -129,7 +131,7 @@ button {
 
   <div class="row input-group">
     <strong>Default Width:</strong>
-    <input type="number" id="defaultWidth" value="400" oninput="savePageState(); calculateResolution();">
+    <input type="number" id="defaultWidth" value="400" oninput="calculateResolution(); saveState()">
   </div>
 
   <div class="row">
@@ -138,9 +140,9 @@ button {
   </div>
 
   <div class="row input-group">
-    <strong>Bump Up:</strong>
+    <strong>Bump:</strong>
     <button onclick="adjustBump(-8)">-</button>
-    <input type="number" id="bumpUpValue" value="8" oninput="savePageState()">
+    <input type="number" id="bumpUpValue" value="8" oninput="saveState()">
     <button onclick="adjustBump(8)">+</button>
     <button onclick="bumpUpResolution()">Bump Up</button>
   </div>
@@ -151,63 +153,95 @@ button {
 <!-- Notes -->
 <div class="calculator">
   <div class="calculator-title">Notes</div>
-  <textarea id="notes" placeholder="Take notes here..." oninput="savePageState()"></textarea>
+  <textarea id="notes" oninput="saveState()"></textarea>
 </div>
 
 </div>
 
 <script>
+const widthR = document.getElementById('widthR');
+const heightR = document.getElementById('heightR');
+const heightPlusBtn = document.getElementById('heightPlusBtn');
+
 function gcd(a, b) {
   return b === 0 ? a : gcd(b, a % b);
 }
 
-/* Width control */
-function adjustWidth(amount) {
-  let width = parseInt(widthR.value) + amount;
-  if (width < 64) width = 64;
-  widthR.value = width;
+/* Width */
+function adjustWidth(val) {
+  let w = parseInt(widthR.value) + val;
+  if (w < 64) w = 64;
+  widthR.value = w;
   updateRatio();
 }
 
-/* Aspect ratio logic */
+/* Height */
+function adjustHeight(val) {
+  let w = parseInt(widthR.value);
+  let h = parseInt(heightR.value);
+  let min = w;
+  let max = w * 2;
+
+  h += val;
+  if (h < min) h = min;
+  if (h > max) h = max;
+
+  heightR.value = h;
+  updateRatio();
+}
+
+/* Aspect */
 function resetHeight() {
   heightR.value = widthR.value;
   updateRatio();
 }
 
 function setAspectRatio(w, h) {
-  heightR.value = Math.round((widthR.value * h) / w);
+  heightR.value = Math.round(widthR.value * h / w);
   updateRatio();
 }
 
 function updateRatio() {
   const w = parseInt(widthR.value);
   const h = parseInt(heightR.value);
+
   if (w > 0 && h > 0) {
     const d = gcd(w, h);
     ratioButtonR.innerText = `${w/d}:${h/d}`;
   }
-  savePageState();
+
+  updateHeightButton();
+  saveState();
+}
+
+/* Height + button label */
+function updateHeightButton() {
+  const w = parseInt(widthR.value);
+  const h = parseInt(heightR.value);
+  const max = w * 2;
+  const remaining = Math.floor((max - h) / 8);
+
+  heightPlusBtn.innerText =
+    remaining <= 0 ? 'MAX' : `+ (${remaining})`;
 }
 
 /* Resolution booster */
 function calculateResolution() {
-  const ratio = aspectRatio.value.split(':').map(Number);
-  if (ratio.length !== 2) return;
-  const width = parseInt(defaultWidth.value);
-  const height = Math.round(width * ratio[1] / ratio[0]);
-  calculatedWidth.innerText = width;
-  calculatedHeight.innerText = height;
-  savePageState();
+  const parts = aspectRatio.value.split(':').map(Number);
+  if (parts.length !== 2) return;
+  const w = parseInt(defaultWidth.value);
+  calculatedWidth.innerText = w;
+  calculatedHeight.innerText = Math.round(w * parts[1] / parts[0]);
+  saveState();
 }
 
 function bumpUpResolution() {
-  const ratio = aspectRatio.value.split(':').map(Number);
-  let width = parseInt(calculatedWidth.innerText);
-  width += parseInt(bumpUpValue.value);
-  calculatedWidth.innerText = width;
-  calculatedHeight.innerText = Math.round(width * ratio[1] / ratio[0]);
-  savePageState();
+  const parts = aspectRatio.value.split(':').map(Number);
+  let w = parseInt(calculatedWidth.innerText);
+  w += parseInt(bumpUpValue.value);
+  calculatedWidth.innerText = w;
+  calculatedHeight.innerText = Math.round(w * parts[1] / parts[0]);
+  saveState();
 }
 
 function copyRatio() {
@@ -215,27 +249,27 @@ function copyRatio() {
   calculateResolution();
 }
 
-/* Bump adjust */
-function adjustBump(val) {
-  bumpUpValue.value = Math.max(0, parseInt(bumpUpValue.value) + val);
-  savePageState();
+/* Bump */
+function adjustBump(v) {
+  bumpUpValue.value = Math.max(0, parseInt(bumpUpValue.value) + v);
+  saveState();
 }
 
 /* Persistence */
-function savePageState() {
+function saveState() {
   const data = {};
-  document.querySelectorAll('input, textarea, span').forEach(el => {
+  document.querySelectorAll('input, textarea, span, button').forEach(el => {
     if (el.id) data[el.id] = el.innerText || el.value;
   });
-  localStorage.setItem('pageState', JSON.stringify(data));
+  localStorage.setItem('state', JSON.stringify(data));
 }
 
-function restorePageState() {
-  const data = JSON.parse(localStorage.getItem('pageState') || '{}');
+function restoreState() {
+  const data = JSON.parse(localStorage.getItem('state') || '{}');
   Object.keys(data).forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    if (el.tagName === 'SPAN') el.innerText = data[id];
+    if (el.tagName === 'SPAN' || el.tagName === 'BUTTON') el.innerText = data[id];
     else el.value = data[id];
   });
 }
@@ -243,17 +277,16 @@ function restorePageState() {
 /* Debounce */
 function debounce(fn, t=200) {
   let timer;
-  return (...args) => {
+  return (...a) => {
     clearTimeout(timer);
-    timer = setTimeout(() => fn(...args), t);
+    timer = setTimeout(() => fn(...a), t);
   };
 }
 
-const debouncedUpdateRatio = debounce(updateRatio);
 const debouncedCalculateResolution = debounce(calculateResolution);
 
 /* Init */
-restorePageState();
+restoreState();
 updateRatio();
 </script>
 
