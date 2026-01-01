@@ -1,331 +1,261 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=0.9"/>
-  <title>Aspect Ratio Calculator</title>
-  <style>
-    @font-face {
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=0.9"/>
+<title>Aspect Ratio Calculator</title>
+
+<style>
+@font-face {
   font-family: 'MyFont';
   src: url('font.ttf');
 }
-    body {
-      text-align: center;
-      font-family: MyFont, sans-serif;
-      margin: 10px;
-    }
-    .container {
-      display: inline-block;
-      text-align: left;
-      width: 300px;
-      margin: 0 auto;
-    }
-    input {
-      width: 60px;
-      padding: 5px;
-      font-size: 16px;
-      text-align: center;
-    }
-    button {
-      padding: 5px 8px;
-      font-size: 14px;
-      cursor: pointer;
-      margin: 5px;
-    }
-    .calculator-title {
-      font-size: 20px;
-      font-weight: bold;
-      margin: 20px 0 5px;
-    }
-    #aspectButtons {
-      display: flex;
-      justify-content: center;
-      gap: 45px;
-      margin-top: 10px;
-    }
-    .ratioButton {
-      font-size: 16px;
-      font-weight: bold;
-      padding: 5px 10px;
-      border: none;
-      border-radius: 4px;
-      color: white;
-    }
-    #ratioButtonR {
-      background-color: #ff4d4d;
-    }
-    .row {
-      margin: 10px 0;
-    }
-    .separator {
-      border-top: 2px solid #ccc;
-      margin: 20px 0;
-    }
-    .input-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      justify-content: center;
-    }
-    #notes {
-      margin-top: 20px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      width: 100%;
-      height: 150px;
-      resize: vertical;
-      font-size: 14px;
-    }
-  </style>
+
+body {
+  text-align: center;
+  font-family: MyFont, sans-serif;
+  margin: 10px;
+}
+
+.container {
+  display: inline-block;
+  text-align: left;
+  width: 300px;
+}
+
+input {
+  width: 60px;
+  padding: 5px;
+  font-size: 16px;
+  text-align: center;
+}
+
+button {
+  padding: 5px 8px;
+  font-size: 14px;
+  cursor: pointer;
+  margin: 5px;
+}
+
+.calculator-title {
+  font-size: 20px;
+  font-weight: bold;
+  margin: 20px 0 5px;
+}
+
+#aspectButtons {
+  display: flex;
+  justify-content: center;
+  gap: 45px;
+  margin-top: 10px;
+}
+
+.ratioButton {
+  font-size: 16px;
+  font-weight: bold;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  background-color: #ff4d4d;
+}
+
+.row {
+  margin: 10px 0;
+}
+
+.separator {
+  border-top: 2px solid #ccc;
+  margin: 20px 0;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+}
+
+#notes {
+  margin-top: 20px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  width: 100%;
+  height: 150px;
+  resize: vertical;
+  font-size: 14px;
+}
+</style>
 </head>
+
 <body>
 
-  <!-- Resolution / Aspect Ratio -->
-  <div class="container">
-    <div class="calculator" id="calcR">
-      <div class="calculator-title">Resolution / Aspect Ratio</div>
+<div class="container">
 
-      <div class="row input-group">
-        <strong>Width:</strong>
-        <button onclick="adjustWidth('R', -8)">-</button>
-        <input type="number" id="widthR" value="256" oninput="debouncedUpdateRatio('R')" min="0" max="9999">
-        <button onclick="adjustWidth('R', 8)">+</button>
-      </div>
+<!-- Resolution / Aspect Ratio -->
+<div class="calculator" id="calcR">
+  <div class="calculator-title">Resolution / Aspect Ratio</div>
 
-      <div class="row input-group">
-        <strong>Height:</strong>
-        <button onclick="adjustHeight('R', -8)">-</button>
-        <input type="number" id="heightR" value="256" oninput="debouncedUpdateRatio('R')" min="0" max="9999">
-        <button onclick="adjustHeight('R', 8)">+</button>
-      </div>
-
-      <div id="aspectButtons">
-        <button onclick="setAspectRatio('R', 4, 5)">4:5</button>
-        <button class="ratioButton" id="ratioButtonR" onclick="resetHeight('R')">1:1</button>
-        <button onclick="setAspectRatio('R', 2, 3)">2:3</button>
-      </div>
-    </div>
-
-    <div class="separator"></div>
-
-    <!-- Resolution Booster -->
-    <div class="calculator" id="calcAR">
-      <div class="calculator-title">Resolution Booster</div>
-
-      <div class="row input-group">
-        <strong>Aspect Ratio:</strong>
-        <input type="text" id="aspectRatio" placeholder="e.g., 16:9" oninput="debouncedCalculateResolution()">
-        <button onclick="copyRatio()">Copy Ratio</button>
-      </div>
-
-      <div class="row input-group">
-        <strong>Default Width:</strong>
-        <input type="number" id="defaultWidth" value="400" oninput="updateDefaultWidth()">
-      </div>
-
-      <div class="row">
-        <strong>Calculated Resolution:</strong>
-        <span id="calculatedWidth"></span> x <span id="calculatedHeight"></span>
-      </div>
-
-      <div class="row input-group">
-        <strong>Bump Up Value:</strong>
-        <button onclick="adjustBumpUpValue(-8)">-</button>
-        <input type="number" id="bumpUpValue" value="8" oninput="savePageState()">
-        <button onclick="adjustBumpUpValue(8)">+</button>
-        <button onclick="bumpUpResolution()">Bump Up</button>
-      </div>
-    </div>
-
-    <div class="separator"></div>
-
-    <!-- Notes -->
-    <div class="calculator" id="notesSection">
-      <div class="calculator-title">Notes</div>
-      <textarea id="notes" placeholder="Take notes here..." oninput="savePageState()"></textarea>
-    </div>
-
-    <div class="separator"></div>
-
-    <!-- Aspect Ratio Finder -->
-    <div class="calculator" id="calcManual">
-      <div class="calculator-title">Aspect Ratio Finder</div>
-
-      <div class="row input-group">
-        <strong>Width:</strong>
-        <input type="number" id="manualWidth" value="256" oninput="debouncedCalculateManualAspectRatio()">
-      </div>
-
-      <div class="row input-group">
-        <strong>Height:</strong>
-        <input type="number" id="manualHeight" value="256" oninput="debouncedCalculateManualAspectRatio()">
-      </div>
-
-      <div class="row">
-        <strong>Aspect Ratio:</strong>
-        <span id="manualAspectRatio"></span>
-      </div>
-    </div>
+  <div class="row input-group">
+    <strong>Width:</strong>
+    <button onclick="adjustWidth(-8)">-</button>
+    <input type="number" id="widthR" value="256" oninput="debouncedUpdateRatio()">
+    <button onclick="adjustWidth(8)">+</button>
   </div>
 
-  <script>
-    function gcd(a, b) {
-      return b === 0 ? a : gcd(b, a % b);
-    }
+  <div class="row input-group">
+    <strong>Height:</strong>
+    <input type="number" id="heightR" value="256" oninput="debouncedUpdateRatio()">
+  </div>
 
-    function adjustWidth(calc, amount) {
-      let widthInput = document.getElementById('width' + calc);
-      let newWidth = parseInt(widthInput.value, 10) + amount;
-      if (newWidth >= 16 && newWidth <= 9999) {
-        widthInput.value = newWidth;
-        updateRatio(calc);
-        savePageState();
-      }
-    }
+  <div id="aspectButtons">
+    <button onclick="setAspectRatio(4,5)">4:5</button>
+    <button class="ratioButton" id="ratioButtonR" onclick="resetHeight()">1:1</button>
+    <button onclick="setAspectRatio(2,3)">2:3</button>
+  </div>
+</div>
 
-    function adjustHeight(calc, amount) {
-      let heightInput = document.getElementById('height' + calc);
-      let widthInput = document.getElementById('width' + calc);
-      let newHeight = parseInt(heightInput.value, 10) + amount;
-      if (newHeight >= 16 && newHeight <= parseInt(widthInput.value) * 2) {
-        heightInput.value = newHeight;
-        updateRatio(calc);
-        savePageState();
-      }
-    }
+<div class="separator"></div>
 
-    function resetHeight(calc) {
-      let width = parseInt(document.getElementById('width' + calc).value, 10);
-      document.getElementById('height' + calc).value = width;
-      updateRatio(calc);
-      savePageState();
-    }
+<!-- Resolution Booster -->
+<div class="calculator">
+  <div class="calculator-title">Resolution Booster</div>
 
-    function setAspectRatio(calc, wPart, hPart) {
-      let width = parseInt(document.getElementById('width' + calc).value, 10);
-      let newHeight = Math.round((width * hPart) / wPart);
-      document.getElementById('height' + calc).value = newHeight;
-      updateRatio(calc);
-      savePageState();
-    }
+  <div class="row input-group">
+    <strong>Aspect Ratio:</strong>
+    <input type="text" id="aspectRatio" placeholder="e.g., 16:9" oninput="debouncedCalculateResolution()">
+    <button onclick="copyRatio()">Copy Ratio</button>
+  </div>
 
-    function updateRatio(calc) {
-      let width = parseInt(document.getElementById('width' + calc).value, 10);
-      let height = parseInt(document.getElementById('height' + calc).value, 10);
-      if (!isNaN(width) && !isNaN(height) && width > 0 && height > 0) {
-        let divisor = gcd(width, height);
-        let ratioText = (width / divisor) + ":" + (height / divisor);
-        document.getElementById('ratioButton' + calc).innerText = ratioText;
-      }
-    }
+  <div class="row input-group">
+    <strong>Default Width:</strong>
+    <input type="number" id="defaultWidth" value="400" oninput="savePageState(); calculateResolution();">
+  </div>
 
-    function calculateManualAspectRatio() {
-      const manualWidth = parseInt(document.getElementById('manualWidth').value);
-      const manualHeight = parseInt(document.getElementById('manualHeight').value);
-      if (!isNaN(manualWidth) && !isNaN(manualHeight) && manualWidth > 0 && manualHeight > 0) {
-        let divisor = gcd(manualWidth, manualHeight);
-        let ratioText = (manualWidth / divisor) + ":" + (manualHeight / divisor);
-        document.getElementById('manualAspectRatio').innerText = ratioText;
-      } else {
-        document.getElementById('manualAspectRatio').innerText = '';
-      }
-      savePageState();
-    }
+  <div class="row">
+    <strong>Calculated Resolution:</strong>
+    <span id="calculatedWidth"></span> x <span id="calculatedHeight"></span>
+  </div>
 
-    function calculateResolution() {
-      const aspectRatio = document.getElementById('aspectRatio').value;
-      const [widthPart, heightPart] = aspectRatio.split(":").map(Number);
-      const defaultWidth = parseInt(document.getElementById('defaultWidth').value, 10);
-      if (widthPart && heightPart) {
-        const width = defaultWidth;
-        const height = Math.round((width * heightPart) / widthPart);
-        document.getElementById('calculatedWidth').innerText = width;
-        document.getElementById('calculatedHeight').innerText = height;
-      }
-    }
+  <div class="row input-group">
+    <strong>Bump Up:</strong>
+    <button onclick="adjustBump(-8)">-</button>
+    <input type="number" id="bumpUpValue" value="8" oninput="savePageState()">
+    <button onclick="adjustBump(8)">+</button>
+    <button onclick="bumpUpResolution()">Bump Up</button>
+  </div>
+</div>
 
-    function bumpUpResolution() {
-      const width = parseInt(document.getElementById('calculatedWidth').innerText);
-      const height = parseInt(document.getElementById('calculatedHeight').innerText);
-      const aspectRatio = document.getElementById('aspectRatio').value;
-      const [widthPart, heightPart] = aspectRatio.split(":").map(Number);
-      const bumpUpValue = parseInt(document.getElementById('bumpUpValue').value, 10);
-      if (width && height && widthPart && heightPart) {
-        const newWidth = width + bumpUpValue;
-        const newHeight = Math.round((newWidth * heightPart) / widthPart);
-        document.getElementById('calculatedWidth').innerText = newWidth;
-        document.getElementById('calculatedHeight').innerText = newHeight;
-        savePageState();
-      }
-    }
+<div class="separator"></div>
 
-    function copyRatio() {
-      const ratioText = document.getElementById('ratioButtonR').innerText;
-      document.getElementById('aspectRatio').value = ratioText;
-      document.getElementById('calculatedWidth').innerText = '400';
-      calculateResolution();
-    }
+<!-- Notes -->
+<div class="calculator">
+  <div class="calculator-title">Notes</div>
+  <textarea id="notes" placeholder="Take notes here..." oninput="savePageState()"></textarea>
+</div>
 
-    function updateBumpUpValue() {
-      const bumpUpValue = document.getElementById('bumpUpValue').value;
-      localStorage.setItem('bumpUpValue', bumpUpValue);
-    }
+</div>
 
-    function updateDefaultWidth() {
-      const defaultWidth = document.getElementById('defaultWidth').value;
-      localStorage.setItem('defaultWidth', defaultWidth);
-      calculateResolution();
-    }
+<script>
+function gcd(a, b) {
+  return b === 0 ? a : gcd(b, a % b);
+}
 
-    function adjustBumpUpValue(amount) {
-      let bumpUpValue = parseInt(document.getElementById('bumpUpValue').value, 10);
-      bumpUpValue += amount;
-      if (bumpUpValue < 0) bumpUpValue = 0;
-      document.getElementById('bumpUpValue').value = bumpUpValue;
-      savePageState();
-    }
+/* Width control */
+function adjustWidth(amount) {
+  let width = parseInt(widthR.value) + amount;
+  if (width < 64) width = 64;
+  widthR.value = width;
+  updateRatio();
+}
 
-    function savePageState() {
-      const formData = {};
-      const formElements = document.querySelectorAll('input, textarea, select');
-      formElements.forEach(element => {
-        formData[element.id] = element.value;
-      });
-      localStorage.setItem('pageState', JSON.stringify(formData));
-    }
+/* Aspect ratio logic */
+function resetHeight() {
+  heightR.value = widthR.value;
+  updateRatio();
+}
 
-    function restorePageState() {
-      const savedState = localStorage.getItem('pageState');
-      if (savedState) {
-        try {
-          const formData = JSON.parse(savedState);
-          const formElements = document.querySelectorAll('input, textarea, select');
-          formElements.forEach(element => {
-            if (formData[element.id] !== undefined) {
-              element.value = formData[element.id];
-            }
-          });
-        } catch (e) {
-          console.error("Failed to restore page state:", e);
-        }
-      }
-    }
+function setAspectRatio(w, h) {
+  heightR.value = Math.round((widthR.value * h) / w);
+  updateRatio();
+}
 
-    function debounce(func, wait) {
-      let timeout;
-      return function(...args) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), wait);
-      };
-    }
+function updateRatio() {
+  const w = parseInt(widthR.value);
+  const h = parseInt(heightR.value);
+  if (w > 0 && h > 0) {
+    const d = gcd(w, h);
+    ratioButtonR.innerText = `${w/d}:${h/d}`;
+  }
+  savePageState();
+}
 
-    const debouncedUpdateRatio = debounce(updateRatio, 200);
-    const debouncedCalculateManualAspectRatio = debounce(calculateManualAspectRatio, 200);
-    const debouncedCalculateResolution = debounce(calculateResolution, 200);
+/* Resolution booster */
+function calculateResolution() {
+  const ratio = aspectRatio.value.split(':').map(Number);
+  if (ratio.length !== 2) return;
+  const width = parseInt(defaultWidth.value);
+  const height = Math.round(width * ratio[1] / ratio[0]);
+  calculatedWidth.innerText = width;
+  calculatedHeight.innerText = height;
+  savePageState();
+}
 
-    // Restore the saved state when the page loads
-    restorePageState();
-    updateRatio('R');
-  </script>
+function bumpUpResolution() {
+  const ratio = aspectRatio.value.split(':').map(Number);
+  let width = parseInt(calculatedWidth.innerText);
+  width += parseInt(bumpUpValue.value);
+  calculatedWidth.innerText = width;
+  calculatedHeight.innerText = Math.round(width * ratio[1] / ratio[0]);
+  savePageState();
+}
+
+function copyRatio() {
+  aspectRatio.value = ratioButtonR.innerText;
+  calculateResolution();
+}
+
+/* Bump adjust */
+function adjustBump(val) {
+  bumpUpValue.value = Math.max(0, parseInt(bumpUpValue.value) + val);
+  savePageState();
+}
+
+/* Persistence */
+function savePageState() {
+  const data = {};
+  document.querySelectorAll('input, textarea, span').forEach(el => {
+    if (el.id) data[el.id] = el.innerText || el.value;
+  });
+  localStorage.setItem('pageState', JSON.stringify(data));
+}
+
+function restorePageState() {
+  const data = JSON.parse(localStorage.getItem('pageState') || '{}');
+  Object.keys(data).forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (el.tagName === 'SPAN') el.innerText = data[id];
+    else el.value = data[id];
+  });
+}
+
+/* Debounce */
+function debounce(fn, t=200) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), t);
+  };
+}
+
+const debouncedUpdateRatio = debounce(updateRatio);
+const debouncedCalculateResolution = debounce(calculateResolution);
+
+/* Init */
+restorePageState();
+updateRatio();
+</script>
+
 </body>
 </html>
