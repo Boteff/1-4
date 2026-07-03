@@ -99,21 +99,25 @@ function calculate() {
     const width = parseFloat(document.getElementById("width").value);
     const tbody = document.getElementById("results");
 
-    tbody.innerHTML = "";
+    if (!width || width <= 0) {
+        tbody.innerHTML = "";
+        return;
+    }
 
-    if (!width || width <= 0) return;
-
+    let html = "";
     ratios.forEach(ratio => {
 
         const height = Math.round(width * ratio.h / ratio.w);
 
-        tbody.innerHTML += `
+        html += `
             <tr>
                 <td>${ratio.name}</td>
                 <td>${width} × ${height}</td>
             </tr>
         `;
     });
+
+    tbody.innerHTML = html;
 
 }
 
